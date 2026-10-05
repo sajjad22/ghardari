@@ -51,15 +51,21 @@ class ExpensesRepository(private val dbHelper: DatabaseHelper) {
     fun copyRationFromPreviousMonth(fromMonthKey: String, toMonthKey: String): Int =
         dbHelper.copyRationFromPreviousMonth(fromMonthKey, toMonthKey)
 
+    fun getAllKhataTransactions(): List<KhataTransaction> = dbHelper.getAllKhataTransactions()
+    fun getAllMonthlyExpenditures(): List<MonthlyExpenditure> = dbHelper.getAllMonthlyExpenditures()
+    fun getAllDailyExpenses(): List<DailyExpense> = dbHelper.getAllDailyExpenses()
+    fun getAllRationItems(): List<RationItem> = dbHelper.getAllRationItems()
+
     // History & Reports
     fun getAllRecordedMonths(): List<String> = dbHelper.getAllRecordedMonths()
     fun getDashboardSummary(monthKey: String): DashboardSummary = dbHelper.getDashboardSummary(monthKey)
 
     // Restore
     fun restoreBackupData(
-        parties: List<PartyRecord>,
-        monthlyExp: List<MonthlyExpenditure>,
-        dailyExp: List<DailyExpense>,
-        ration: List<RationItem>
-    ) = dbHelper.restoreBackupData(parties, monthlyExp, dailyExp, ration)
+        parties: List<PartyRecord>?,
+        transactions: List<KhataTransaction>?,
+        monthlyExp: List<MonthlyExpenditure>?,
+        dailyExp: List<DailyExpense>?,
+        ration: List<RationItem>?
+    ) = dbHelper.restoreBackupData(parties, transactions, monthlyExp, dailyExp, ration)
 }

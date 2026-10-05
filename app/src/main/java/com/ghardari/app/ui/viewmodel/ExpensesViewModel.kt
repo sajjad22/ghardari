@@ -12,10 +12,12 @@ import com.ghardari.app.data.model.*
 import com.ghardari.app.data.repository.BackupManager
 import com.ghardari.app.data.repository.ExpensesRepository
 import com.ghardari.app.data.repository.PrintReportHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.*
@@ -306,12 +308,23 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun restoreBackup(uri: Uri) {
-        val success = backupManager.restoreFromUri(uri)
-        if (success) {
-            refreshAll()
-            Toast.makeText(getApplication(), I18n.t("restore_success", _language.value), Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(getApplication(), I18n.t("restore_failed", _language.value), Toast.LENGTH_LONG).show()
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val success = backupManager.restoreFromUri(uri)
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        refreshAll()
+                        Toast.makeText(getApplication(), I18n.t("restore_success", _language.value), Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(getApplication(), I18n.t("restore_failed", _language.value), Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(getApplication(), "Restore error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 }

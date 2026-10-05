@@ -191,6 +191,29 @@ class DatabaseHelper(context: Context) :
     }
 
     // ==========================================
+    // Safe Cursor Helpers (Guaranteed never null)
+    // ==========================================
+    private fun Cursor.getSafeString(colName: String, default: String = ""): String {
+        val idx = getColumnIndex(colName)
+        return if (idx >= 0 && !isNull(idx)) getString(idx) ?: default else default
+    }
+
+    private fun Cursor.getSafeDouble(colName: String, default: Double = 0.0): Double {
+        val idx = getColumnIndex(colName)
+        return if (idx >= 0 && !isNull(idx)) getDouble(idx) else default
+    }
+
+    private fun Cursor.getSafeLong(colName: String, default: Long = 0L): Long {
+        val idx = getColumnIndex(colName)
+        return if (idx >= 0 && !isNull(idx)) getLong(idx) else default
+    }
+
+    private fun Cursor.getSafeInt(colName: String, default: Int = 0): Int {
+        val idx = getColumnIndex(colName)
+        return if (idx >= 0 && !isNull(idx)) getInt(idx) else default
+    }
+
+    // ==========================================
     // 1. Udhar Khata
     // ==========================================
     fun getAllParties(): List<PartyRecord> {
@@ -201,13 +224,13 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 list.add(
                     PartyRecord(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_PARTY_ID)),
-                        name = it.getString(it.getColumnIndexOrThrow(COL_PARTY_NAME)),
-                        phone = it.getString(it.getColumnIndexOrThrow(COL_PARTY_PHONE)),
-                        type = it.getString(it.getColumnIndexOrThrow(COL_PARTY_TYPE)),
-                        currentBalance = it.getDouble(it.getColumnIndexOrThrow(COL_PARTY_BALANCE)),
-                        updatedAt = it.getString(it.getColumnIndexOrThrow(COL_PARTY_UPDATED_AT)),
-                        notes = it.getString(it.getColumnIndexOrThrow(COL_PARTY_NOTES))
+                        id = it.getSafeLong(COL_PARTY_ID),
+                        name = it.getSafeString(COL_PARTY_NAME).ifBlank { "Party" },
+                        phone = it.getSafeString(COL_PARTY_PHONE),
+                        type = it.getSafeString(COL_PARTY_TYPE, "LENDER"),
+                        currentBalance = it.getSafeDouble(COL_PARTY_BALANCE),
+                        updatedAt = it.getSafeString(COL_PARTY_UPDATED_AT),
+                        notes = it.getSafeString(COL_PARTY_NOTES)
                     )
                 )
             }
@@ -236,41 +259,41 @@ class DatabaseHelper(context: Context) :
 
     fun addKhataTransaction(partyId: Long, partyName: String, type: String, amount: Double, notes: String): Long {
         val db = writableDatabase
-        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val cv = ContentValues().apply {
             put(COL_KT_PARTY_ID, partyId)
             put(COL_KT_PARTY_NAME, partyName)
             put(COL_KT_TYPE, type)
             put(COL_KT_AMOUNT, amount)
-            put(COL_KT_DATE, dateStr)
+            put(COL_KT_DATE, today)
             put(COL_KT_NOTES, notes)
             put(COL_KT_CREATED_AT, System.currentTimeMillis())
         }
-        val id = db.insert(TABLE_KHATA_TRX, null, cv)
+        val trxId = db.insert(TABLE_KHATA_TRX, null, cv)
         recalculatePartyBalance(partyId)
-        return id
+        return trxId
     }
 
-    fun clearPartyAccount(partyId: Long, partyName: String) {
+    fun clearPartyAccount(partyId: Long, partyName: String): Long {
         val db = writableDatabase
-        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val cv = ContentValues().apply {
             put(COL_KT_PARTY_ID, partyId)
             put(COL_KT_PARTY_NAME, partyName)
             put(COL_KT_TYPE, "CLEAR")
             put(COL_KT_AMOUNT, 0.0)
-            put(COL_KT_DATE, dateStr)
-            put(COL_KT_NOTES, "حساب صاف ٿي ويو")
+            put(COL_KT_DATE, today)
+            put(COL_KT_NOTES, "حساب صاف ٿيو (Settled)")
             put(COL_KT_CREATED_AT, System.currentTimeMillis())
         }
-        db.insert(TABLE_KHATA_TRX, null, cv)
-
+        val trxId = db.insert(TABLE_KHATA_TRX, null, cv)
         val now = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
         val partyCv = ContentValues().apply {
             put(COL_PARTY_BALANCE, 0.0)
             put(COL_PARTY_UPDATED_AT, now)
         }
         db.update(TABLE_PARTIES, partyCv, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
+        return trxId
     }
 
     fun deleteParty(partyId: Long) {
@@ -290,14 +313,37 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 list.add(
                     KhataTransaction(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_KT_ID)),
-                        partyId = it.getLong(it.getColumnIndexOrThrow(COL_KT_PARTY_ID)),
-                        partyName = it.getString(it.getColumnIndexOrThrow(COL_KT_PARTY_NAME)),
-                        type = it.getString(it.getColumnIndexOrThrow(COL_KT_TYPE)),
-                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_KT_AMOUNT)),
-                        date = it.getString(it.getColumnIndexOrThrow(COL_KT_DATE)),
-                        notes = it.getString(it.getColumnIndexOrThrow(COL_KT_NOTES)),
-                        createdAt = it.getLong(it.getColumnIndexOrThrow(COL_KT_CREATED_AT))
+                        id = it.getSafeLong(COL_KT_ID),
+                        partyId = it.getSafeLong(COL_KT_PARTY_ID),
+                        partyName = it.getSafeString(COL_KT_PARTY_NAME),
+                        type = it.getSafeString(COL_KT_TYPE, "DEBIT"),
+                        amount = it.getSafeDouble(COL_KT_AMOUNT),
+                        date = it.getSafeString(COL_KT_DATE),
+                        notes = it.getSafeString(COL_KT_NOTES),
+                        createdAt = it.getSafeLong(COL_KT_CREATED_AT)
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun getAllKhataTransactions(): List<KhataTransaction> {
+        val list = mutableListOf<KhataTransaction>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_KHATA_TRX ORDER BY $COL_KT_ID ASC", null)
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    KhataTransaction(
+                        id = it.getSafeLong(COL_KT_ID),
+                        partyId = it.getSafeLong(COL_KT_PARTY_ID),
+                        partyName = it.getSafeString(COL_KT_PARTY_NAME),
+                        type = it.getSafeString(COL_KT_TYPE, "DEBIT"),
+                        amount = it.getSafeDouble(COL_KT_AMOUNT),
+                        date = it.getSafeString(COL_KT_DATE),
+                        notes = it.getSafeString(COL_KT_NOTES),
+                        createdAt = it.getSafeLong(COL_KT_CREATED_AT)
                     )
                 )
             }
@@ -314,8 +360,8 @@ class DatabaseHelper(context: Context) :
         )
         cursor.use {
             while (it.moveToNext()) {
-                val type = it.getString(0)
-                val amount = it.getDouble(1)
+                val type = if (!it.isNull(0)) it.getString(0) ?: "DEBIT" else "DEBIT"
+                val amount = if (!it.isNull(1)) it.getDouble(1) else 0.0
                 when (type) {
                     "DEBIT" -> balance += amount
                     "CREDIT" -> balance -= amount
@@ -345,13 +391,35 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 list.add(
                     MonthlyExpenditure(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_ME_ID)),
-                        monthKey = it.getString(it.getColumnIndexOrThrow(COL_ME_MONTH_KEY)),
-                        title = it.getString(it.getColumnIndexOrThrow(COL_ME_TITLE)),
-                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_ME_AMOUNT)),
-                        isPaid = it.getInt(it.getColumnIndexOrThrow(COL_ME_IS_PAID)) == 1,
-                        paidDate = it.getString(it.getColumnIndexOrThrow(COL_ME_PAID_DATE)),
-                        notes = it.getString(it.getColumnIndexOrThrow(COL_ME_NOTES))
+                        id = it.getSafeLong(COL_ME_ID),
+                        monthKey = it.getSafeString(COL_ME_MONTH_KEY),
+                        title = it.getSafeString(COL_ME_TITLE),
+                        amount = it.getSafeDouble(COL_ME_AMOUNT),
+                        isPaid = it.getSafeInt(COL_ME_IS_PAID) == 1,
+                        paidDate = it.getSafeString(COL_ME_PAID_DATE),
+                        notes = it.getSafeString(COL_ME_NOTES)
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun getAllMonthlyExpenditures(): List<MonthlyExpenditure> {
+        val list = mutableListOf<MonthlyExpenditure>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_MONTHLY_EXP ORDER BY $COL_ME_MONTH_KEY DESC, $COL_ME_ID ASC", null)
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    MonthlyExpenditure(
+                        id = it.getSafeLong(COL_ME_ID),
+                        monthKey = it.getSafeString(COL_ME_MONTH_KEY),
+                        title = it.getSafeString(COL_ME_TITLE),
+                        amount = it.getSafeDouble(COL_ME_AMOUNT),
+                        isPaid = it.getSafeInt(COL_ME_IS_PAID) == 1,
+                        paidDate = it.getSafeString(COL_ME_PAID_DATE),
+                        notes = it.getSafeString(COL_ME_NOTES)
                     )
                 )
             }
@@ -432,14 +500,37 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 list.add(
                     DailyExpense(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_DE_ID)),
-                        date = it.getString(it.getColumnIndexOrThrow(COL_DE_DATE)),
-                        monthKey = it.getString(it.getColumnIndexOrThrow(COL_DE_MONTH_KEY)),
-                        title = it.getString(it.getColumnIndexOrThrow(COL_DE_TITLE)),
-                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_DE_AMOUNT)),
-                        paymentMethod = it.getString(it.getColumnIndexOrThrow(COL_DE_PAY_METHOD)),
-                        notes = it.getString(it.getColumnIndexOrThrow(COL_DE_NOTES)),
-                        createdAt = it.getLong(it.getColumnIndexOrThrow(COL_DE_CREATED_AT))
+                        id = it.getSafeLong(COL_DE_ID),
+                        date = it.getSafeString(COL_DE_DATE),
+                        monthKey = it.getSafeString(COL_DE_MONTH_KEY),
+                        title = it.getSafeString(COL_DE_TITLE),
+                        amount = it.getSafeDouble(COL_DE_AMOUNT),
+                        paymentMethod = it.getSafeString(COL_DE_PAY_METHOD, "Cash"),
+                        notes = it.getSafeString(COL_DE_NOTES),
+                        createdAt = it.getSafeLong(COL_DE_CREATED_AT)
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun getAllDailyExpenses(): List<DailyExpense> {
+        val list = mutableListOf<DailyExpense>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_DAILY_EXP ORDER BY $COL_DE_DATE DESC, $COL_DE_ID DESC", null)
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    DailyExpense(
+                        id = it.getSafeLong(COL_DE_ID),
+                        date = it.getSafeString(COL_DE_DATE),
+                        monthKey = it.getSafeString(COL_DE_MONTH_KEY),
+                        title = it.getSafeString(COL_DE_TITLE),
+                        amount = it.getSafeDouble(COL_DE_AMOUNT),
+                        paymentMethod = it.getSafeString(COL_DE_PAY_METHOD, "Cash"),
+                        notes = it.getSafeString(COL_DE_NOTES),
+                        createdAt = it.getSafeLong(COL_DE_CREATED_AT)
                     )
                 )
             }
@@ -482,16 +573,41 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 list.add(
                     RationItem(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_RAT_ID)),
-                        monthKey = it.getString(it.getColumnIndexOrThrow(COL_RAT_MONTH_KEY)),
-                        name = it.getString(it.getColumnIndexOrThrow(COL_RAT_NAME)),
-                        company = it.getString(it.getColumnIndexOrThrow(COL_RAT_COMPANY)),
-                        quantity = it.getDouble(it.getColumnIndexOrThrow(COL_RAT_QTY)),
-                        unit = it.getString(it.getColumnIndexOrThrow(COL_RAT_UNIT)),
-                        estimatedPrice = it.getDouble(it.getColumnIndexOrThrow(COL_RAT_EST_PRICE)),
-                        actualPrice = it.getDouble(it.getColumnIndexOrThrow(COL_RAT_ACT_PRICE)),
-                        isPurchased = it.getInt(it.getColumnIndexOrThrow(COL_RAT_PURCHASED)) == 1,
-                        notes = it.getString(it.getColumnIndexOrThrow(COL_RAT_NOTES))
+                        id = it.getSafeLong(COL_RAT_ID),
+                        monthKey = it.getSafeString(COL_RAT_MONTH_KEY),
+                        name = it.getSafeString(COL_RAT_NAME),
+                        company = it.getSafeString(COL_RAT_COMPANY),
+                        quantity = it.getSafeDouble(COL_RAT_QTY),
+                        unit = it.getSafeString(COL_RAT_UNIT, "piece"),
+                        estimatedPrice = it.getSafeDouble(COL_RAT_EST_PRICE),
+                        actualPrice = it.getSafeDouble(COL_RAT_ACT_PRICE),
+                        isPurchased = it.getSafeInt(COL_RAT_PURCHASED) == 1,
+                        notes = it.getSafeString(COL_RAT_NOTES)
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun getAllRationItems(): List<RationItem> {
+        val list = mutableListOf<RationItem>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_RATION ORDER BY $COL_RAT_MONTH_KEY DESC, $COL_RAT_ID ASC", null)
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    RationItem(
+                        id = it.getSafeLong(COL_RAT_ID),
+                        monthKey = it.getSafeString(COL_RAT_MONTH_KEY),
+                        name = it.getSafeString(COL_RAT_NAME),
+                        company = it.getSafeString(COL_RAT_COMPANY),
+                        quantity = it.getSafeDouble(COL_RAT_QTY),
+                        unit = it.getSafeString(COL_RAT_UNIT, "piece"),
+                        estimatedPrice = it.getSafeDouble(COL_RAT_EST_PRICE),
+                        actualPrice = it.getSafeDouble(COL_RAT_ACT_PRICE),
+                        isPurchased = it.getSafeInt(COL_RAT_PURCHASED) == 1,
+                        notes = it.getSafeString(COL_RAT_NOTES)
                     )
                 )
             }
@@ -562,8 +678,8 @@ class DatabaseHelper(context: Context) :
             val cursor = db.rawQuery(query, null)
             cursor.use {
                 while (it.moveToNext()) {
-                    val m = it.getString(0)
-                    if (!m.isNullOrBlank()) set.add(m)
+                    val m = if (!it.isNull(0)) it.getString(0) ?: "" else ""
+                    if (m.isNotBlank()) set.add(m)
                 }
             }
         }
@@ -589,8 +705,8 @@ class DatabaseHelper(context: Context) :
         )
         meCursor.use {
             while (it.moveToNext()) {
-                val amt = it.getDouble(0)
-                val isPaid = it.getInt(1) == 1
+                val amt = if (!it.isNull(0)) it.getDouble(0) else 0.0
+                val isPaid = if (!it.isNull(1)) it.getInt(1) == 1 else false
                 billsTotal += amt
                 if (isPaid) billsPaid += amt else {
                     billsUnpaid += amt
@@ -618,9 +734,9 @@ class DatabaseHelper(context: Context) :
         ratCursor.use {
             while (it.moveToNext()) {
                 rationCount++
-                val actPrice = it.getDouble(0)
-                val estPrice = it.getDouble(1)
-                val isPurchased = it.getInt(2) == 1
+                val actPrice = if (!it.isNull(0)) it.getDouble(0) else 0.0
+                val estPrice = if (!it.isNull(1)) it.getDouble(1) else 0.0
+                val isPurchased = if (!it.isNull(2)) it.getInt(2) == 1 else false
                 if (isPurchased) {
                     rationBought++
                     rationTotal += if (actPrice > 0) actPrice else estPrice
@@ -633,8 +749,8 @@ class DatabaseHelper(context: Context) :
         val partyCursor = db.rawQuery("SELECT $COL_PARTY_TYPE, $COL_PARTY_BALANCE FROM $TABLE_PARTIES", null)
         partyCursor.use {
             while (it.moveToNext()) {
-                val pType = it.getString(0)
-                val bal = it.getDouble(1)
+                val pType = if (!it.isNull(0)) it.getString(0) ?: "LENDER" else "LENDER"
+                val bal = if (!it.isNull(1)) it.getDouble(1) else 0.0
                 if (bal > 0) {
                     if (pType == "LENDER") weOwe += bal else owedToUs += bal
                 }
@@ -660,13 +776,14 @@ class DatabaseHelper(context: Context) :
     }
 
     // ==========================================
-    // Restore Backup Data
+    // Restore Backup Data (Completely Null-Safe)
     // ==========================================
     fun restoreBackupData(
-        parties: List<PartyRecord>,
-        monthlyExp: List<MonthlyExpenditure>,
-        dailyExp: List<DailyExpense>,
-        ration: List<RationItem>
+        parties: List<PartyRecord>?,
+        transactions: List<KhataTransaction>?,
+        monthlyExp: List<MonthlyExpenditure>?,
+        dailyExp: List<DailyExpense>?,
+        ration: List<RationItem>?
     ) {
         val db = writableDatabase
         db.beginTransaction()
@@ -677,58 +794,72 @@ class DatabaseHelper(context: Context) :
             db.delete(TABLE_DAILY_EXP, null, null)
             db.delete(TABLE_RATION, null, null)
 
-            for (p in parties) {
+            parties?.forEach { p ->
                 val cv = ContentValues().apply {
                     if (p.id > 0) put(COL_PARTY_ID, p.id)
-                    put(COL_PARTY_NAME, p.name)
-                    put(COL_PARTY_PHONE, p.phone)
-                    put(COL_PARTY_TYPE, p.type)
+                    put(COL_PARTY_NAME, (p.name as String?).orEmpty().ifBlank { "Party" })
+                    put(COL_PARTY_PHONE, (p.phone as String?).orEmpty())
+                    put(COL_PARTY_TYPE, (p.type as String?).orEmpty().ifBlank { "LENDER" })
                     put(COL_PARTY_BALANCE, p.currentBalance)
-                    put(COL_PARTY_UPDATED_AT, p.updatedAt)
-                    put(COL_PARTY_NOTES, p.notes)
+                    put(COL_PARTY_UPDATED_AT, (p.updatedAt as String?).orEmpty())
+                    put(COL_PARTY_NOTES, (p.notes as String?).orEmpty())
                 }
                 db.insert(TABLE_PARTIES, null, cv)
             }
 
-            for (m in monthlyExp) {
+            transactions?.forEach { t ->
+                val cv = ContentValues().apply {
+                    if (t.id > 0) put(COL_KT_ID, t.id)
+                    put(COL_KT_PARTY_ID, t.partyId)
+                    put(COL_KT_PARTY_NAME, (t.partyName as String?).orEmpty())
+                    put(COL_KT_TYPE, (t.type as String?).orEmpty().ifBlank { "DEBIT" })
+                    put(COL_KT_AMOUNT, t.amount)
+                    put(COL_KT_DATE, (t.date as String?).orEmpty())
+                    put(COL_KT_NOTES, (t.notes as String?).orEmpty())
+                    put(COL_KT_CREATED_AT, if (t.createdAt > 0) t.createdAt else System.currentTimeMillis())
+                }
+                db.insert(TABLE_KHATA_TRX, null, cv)
+            }
+
+            monthlyExp?.forEach { m ->
                 val cv = ContentValues().apply {
                     if (m.id > 0) put(COL_ME_ID, m.id)
-                    put(COL_ME_MONTH_KEY, m.monthKey)
-                    put(COL_ME_TITLE, m.title)
+                    put(COL_ME_MONTH_KEY, (m.monthKey as String?).orEmpty())
+                    put(COL_ME_TITLE, (m.title as String?).orEmpty().ifBlank { "Expense" })
                     put(COL_ME_AMOUNT, m.amount)
                     put(COL_ME_IS_PAID, if (m.isPaid) 1 else 0)
-                    put(COL_ME_PAID_DATE, m.paidDate)
-                    put(COL_ME_NOTES, m.notes)
+                    put(COL_ME_PAID_DATE, (m.paidDate as String?).orEmpty())
+                    put(COL_ME_NOTES, (m.notes as String?).orEmpty())
                 }
                 db.insert(TABLE_MONTHLY_EXP, null, cv)
             }
 
-            for (d in dailyExp) {
+            dailyExp?.forEach { d ->
                 val cv = ContentValues().apply {
                     if (d.id > 0) put(COL_DE_ID, d.id)
-                    put(COL_DE_DATE, d.date)
-                    put(COL_DE_MONTH_KEY, d.monthKey)
-                    put(COL_DE_TITLE, d.title)
+                    put(COL_DE_DATE, (d.date as String?).orEmpty())
+                    put(COL_DE_MONTH_KEY, (d.monthKey as String?).orEmpty())
+                    put(COL_DE_TITLE, (d.title as String?).orEmpty().ifBlank { "Expense" })
                     put(COL_DE_AMOUNT, d.amount)
-                    put(COL_DE_PAY_METHOD, d.paymentMethod)
-                    put(COL_DE_NOTES, d.notes)
-                    put(COL_DE_CREATED_AT, d.createdAt)
+                    put(COL_DE_PAY_METHOD, (d.paymentMethod as String?).orEmpty().ifBlank { "Cash" })
+                    put(COL_DE_NOTES, (d.notes as String?).orEmpty())
+                    put(COL_DE_CREATED_AT, if (d.createdAt > 0) d.createdAt else System.currentTimeMillis())
                 }
                 db.insert(TABLE_DAILY_EXP, null, cv)
             }
 
-            for (r in ration) {
+            ration?.forEach { r ->
                 val cv = ContentValues().apply {
                     if (r.id > 0) put(COL_RAT_ID, r.id)
-                    put(COL_RAT_MONTH_KEY, r.monthKey)
-                    put(COL_RAT_NAME, r.name)
-                    put(COL_RAT_COMPANY, r.company)
+                    put(COL_RAT_MONTH_KEY, (r.monthKey as String?).orEmpty())
+                    put(COL_RAT_NAME, (r.name as String?).orEmpty().ifBlank { "Item" })
+                    put(COL_RAT_COMPANY, (r.company as String?).orEmpty())
                     put(COL_RAT_QTY, r.quantity)
-                    put(COL_RAT_UNIT, r.unit)
+                    put(COL_RAT_UNIT, (r.unit as String?).orEmpty().ifBlank { "piece" })
                     put(COL_RAT_EST_PRICE, r.estimatedPrice)
                     put(COL_RAT_ACT_PRICE, r.actualPrice)
                     put(COL_RAT_PURCHASED, if (r.isPurchased) 1 else 0)
-                    put(COL_RAT_NOTES, r.notes)
+                    put(COL_RAT_NOTES, (r.notes as String?).orEmpty())
                 }
                 db.insert(TABLE_RATION, null, cv)
             }

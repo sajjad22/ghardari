@@ -18,24 +18,27 @@ import java.util.Locale
 class BackupManager(private val context: Context, private val repository: ExpensesRepository) {
 
     data class BackupData(
-        val appVersion: String = "3.0.0",
-        val exportedAt: String,
-        val currentMonthKey: String,
-        val parties: List<PartyRecord> = emptyList(),
-        val monthlyExpenditures: List<MonthlyExpenditure> = emptyList(),
-        val dailyExpenses: List<DailyExpense> = emptyList(),
-        val rationItems: List<RationItem> = emptyList()
+        val appVersion: String? = "3.0.0",
+        val exportedAt: String? = null,
+        val currentMonthKey: String? = null,
+        val parties: List<PartyRecord>? = null,
+        val khataTransactions: List<KhataTransaction>? = null,
+        val monthlyExpenditures: List<MonthlyExpenditure>? = null,
+        val dailyExpenses: List<DailyExpense>? = null,
+        val rationItems: List<RationItem>? = null
     )
 
     fun exportToJson(currentMonthKey: String): File {
         val now = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(Date())
         val data = BackupData(
+            appVersion = "3.0.0",
             exportedAt = now,
             currentMonthKey = currentMonthKey,
             parties = repository.getParties(),
-            monthlyExpenditures = repository.getMonthlyExpenditures(currentMonthKey),
-            dailyExpenses = repository.getDailyExpenses(currentMonthKey),
-            rationItems = repository.getRationItems(currentMonthKey)
+            khataTransactions = repository.getAllKhataTransactions(),
+            monthlyExpenditures = repository.getAllMonthlyExpenditures(),
+            dailyExpenses = repository.getAllDailyExpenses(),
+            rationItems = repository.getAllRationItems()
         )
 
         val gson: Gson = GsonBuilder().setPrettyPrinting().create()
@@ -71,25 +74,84 @@ class BackupManager(private val context: Context, private val repository: Expens
     fun restoreFromUri(uri: Uri): Boolean {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return false
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val jsonString = reader.readText()
-            reader.close()
-            inputStream.close()
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
 
             val gson = Gson()
-            val backupData = gson.fromJson(jsonString, BackupData::class.java)
+            val backupData = gson.fromJson(jsonString, BackupData::class.java) ?: return false
 
-            if (backupData != null) {
-                repository.restoreBackupData(
-                    parties = backupData.parties,
-                    monthlyExp = backupData.monthlyExpenditures,
-                    dailyExp = backupData.dailyExpenses,
-                    ration = backupData.rationItems
+            val safeParties = backupData.parties?.map { p ->
+                PartyRecord(
+                    id = p.id,
+                    name = (p.name as String?).orEmpty().ifBlank { "Party" },
+                    phone = (p.phone as String?).orEmpty(),
+                    type = (p.type as String?).orEmpty().ifBlank { "LENDER" },
+                    currentBalance = p.currentBalance,
+                    updatedAt = (p.updatedAt as String?).orEmpty(),
+                    notes = (p.notes as String?).orEmpty()
                 )
-                true
-            } else {
-                false
-            }
+            } ?: emptyList()
+
+            val safeTrx = backupData.khataTransactions?.map { t ->
+                KhataTransaction(
+                    id = t.id,
+                    partyId = t.partyId,
+                    partyName = (t.partyName as String?).orEmpty(),
+                    type = (t.type as String?).orEmpty().ifBlank { "DEBIT" },
+                    amount = t.amount,
+                    date = (t.date as String?).orEmpty(),
+                    notes = (t.notes as String?).orEmpty(),
+                    createdAt = if (t.createdAt > 0) t.createdAt else System.currentTimeMillis()
+                )
+            } ?: emptyList()
+
+            val safeMonthly = backupData.monthlyExpenditures?.map { m ->
+                MonthlyExpenditure(
+                    id = m.id,
+                    monthKey = (m.monthKey as String?).orEmpty(),
+                    title = (m.title as String?).orEmpty().ifBlank { "Expense" },
+                    amount = m.amount,
+                    isPaid = m.isPaid,
+                    paidDate = (m.paidDate as String?).orEmpty(),
+                    notes = (m.notes as String?).orEmpty()
+                )
+            } ?: emptyList()
+
+            val safeDaily = backupData.dailyExpenses?.map { d ->
+                DailyExpense(
+                    id = d.id,
+                    date = (d.date as String?).orEmpty(),
+                    monthKey = (d.monthKey as String?).orEmpty(),
+                    title = (d.title as String?).orEmpty().ifBlank { "Expense" },
+                    amount = d.amount,
+                    paymentMethod = (d.paymentMethod as String?).orEmpty().ifBlank { "Cash" },
+                    notes = (d.notes as String?).orEmpty(),
+                    createdAt = if (d.createdAt > 0) d.createdAt else System.currentTimeMillis()
+                )
+            } ?: emptyList()
+
+            val safeRation = backupData.rationItems?.map { r ->
+                RationItem(
+                    id = r.id,
+                    monthKey = (r.monthKey as String?).orEmpty(),
+                    name = (r.name as String?).orEmpty().ifBlank { "Item" },
+                    company = (r.company as String?).orEmpty(),
+                    quantity = r.quantity,
+                    unit = (r.unit as String?).orEmpty().ifBlank { "piece" },
+                    estimatedPrice = r.estimatedPrice,
+                    actualPrice = r.actualPrice,
+                    isPurchased = r.isPurchased,
+                    notes = (r.notes as String?).orEmpty()
+                )
+            } ?: emptyList()
+
+            repository.restoreBackupData(
+                parties = safeParties,
+                transactions = safeTrx,
+                monthlyExp = safeMonthly,
+                dailyExp = safeDaily,
+                ration = safeRation
+            )
+            true
         } catch (e: Exception) {
             e.printStackTrace()
             false
