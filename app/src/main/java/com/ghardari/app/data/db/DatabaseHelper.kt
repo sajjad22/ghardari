@@ -14,79 +14,74 @@ class DatabaseHelper(context: Context) :
     SQLiteOpenHelper(context.applicationContext, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        const val DATABASE_NAME = "ghardari_household.db"
+        const val DATABASE_NAME = "ghardari_v2.db"
         const val DATABASE_VERSION = 1
 
-        // Table Categories
-        const val TABLE_CATEGORIES = "categories"
-        const val COL_CAT_ID = "id"
-        const val COL_CAT_KEY = "category_key"
-        const val COL_CAT_NAME_SD = "name_sd"
-        const val COL_CAT_NAME_UR = "name_ur"
-        const val COL_CAT_NAME_EN = "name_en"
-        const val COL_CAT_ICON = "icon"
-        const val COL_CAT_COLOR = "color"
-        const val COL_CAT_IS_CUSTOM = "is_custom"
-
-        // Table Parties (Khata)
+        // Table Parties (Udhar Khata)
         const val TABLE_PARTIES = "parties"
         const val COL_PARTY_ID = "id"
         const val COL_PARTY_NAME = "name"
         const val COL_PARTY_PHONE = "phone"
-        const val COL_PARTY_TYPE = "type"
+        const val COL_PARTY_TYPE = "type" // "LENDER" (we owe) or "BORROWER" (they owe)
         const val COL_PARTY_BALANCE = "current_balance"
         const val COL_PARTY_UPDATED_AT = "updated_at"
         const val COL_PARTY_NOTES = "notes"
 
-        // Table Transactions
-        const val TABLE_TRANSACTIONS = "transactions"
-        const val COL_TRX_ID = "id"
-        const val COL_TRX_PARTY_ID = "party_id"
-        const val COL_TRX_PARTY_NAME = "party_name"
-        const val COL_TRX_CATEGORY_ID = "category_id"
-        const val COL_TRX_CATEGORY_KEY = "category_key"
-        const val COL_TRX_TYPE = "type"
-        const val COL_TRX_AMOUNT = "amount"
-        const val COL_TRX_DATE = "date"
-        const val COL_TRX_MONTH_KEY = "month_key"
-        const val COL_TRX_PAY_METHOD = "payment_method"
-        const val COL_TRX_STATUS = "status"
-        const val COL_TRX_NOTES = "notes"
-        const val COL_TRX_CREATED_AT = "created_at"
+        // Table Khata Transactions
+        const val TABLE_KHATA_TRX = "khata_transactions"
+        const val COL_KT_ID = "id"
+        const val COL_KT_PARTY_ID = "party_id"
+        const val COL_KT_PARTY_NAME = "party_name"
+        const val COL_KT_TYPE = "type" // "DEBIT" (we gave), "CREDIT" (we took), "CLEAR"
+        const val COL_KT_AMOUNT = "amount"
+        const val COL_KT_DATE = "date"
+        const val COL_KT_NOTES = "notes"
+        const val COL_KT_CREATED_AT = "created_at"
 
-        // Table Ration Items
+        // Table Monthly Expenditures (Fixed / Salaried Todo)
+        const val TABLE_MONTHLY_EXP = "monthly_expenditures"
+        const val COL_ME_ID = "id"
+        const val COL_ME_MONTH_KEY = "month_key"
+        const val COL_ME_TITLE = "title"
+        const val COL_ME_AMOUNT = "amount"
+        const val COL_ME_IS_PAID = "is_paid"
+        const val COL_ME_PAID_DATE = "paid_date"
+        const val COL_ME_NOTES = "notes"
+
+        // Table Daily Expenses Log
+        const val TABLE_DAILY_EXP = "daily_expenses"
+        const val COL_DE_ID = "id"
+        const val COL_DE_DATE = "date"
+        const val COL_DE_MONTH_KEY = "month_key"
+        const val COL_DE_TITLE = "title"
+        const val COL_DE_AMOUNT = "amount"
+        const val COL_DE_PAY_METHOD = "payment_method"
+        const val COL_DE_NOTES = "notes"
+        const val COL_DE_CREATED_AT = "created_at"
+
+        // Table Ration Checklist
         const val TABLE_RATION = "ration_items"
         const val COL_RAT_ID = "id"
         const val COL_RAT_MONTH_KEY = "month_key"
-        const val COL_RAT_NAME_SD = "name_sd"
-        const val COL_RAT_NAME_UR = "name_ur"
-        const val COL_RAT_NAME_EN = "name_en"
+        const val COL_RAT_NAME = "name"
         const val COL_RAT_QTY = "quantity"
         const val COL_RAT_UNIT = "unit"
         const val COL_RAT_EST_PRICE = "est_price"
         const val COL_RAT_ACT_PRICE = "act_price"
         const val COL_RAT_PURCHASED = "is_purchased"
         const val COL_RAT_NOTES = "notes"
+
+        // Table Custom Dashboard Cards
+        const val TABLE_CUSTOM_CARDS = "custom_dashboard_cards"
+        const val COL_CC_ID = "id"
+        const val COL_CC_TITLE = "title"
+        const val COL_CC_TARGET_TYPE = "target_type"
+        const val COL_CC_TARGET_ID = "target_id"
+        const val COL_CC_ICON = "icon"
+        const val COL_CC_COLOR = "color"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Create Categories
-        db.execSQL(
-            """
-            CREATE TABLE $TABLE_CATEGORIES (
-                $COL_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_CAT_KEY TEXT UNIQUE NOT NULL,
-                $COL_CAT_NAME_SD TEXT NOT NULL,
-                $COL_CAT_NAME_UR TEXT NOT NULL,
-                $COL_CAT_NAME_EN TEXT NOT NULL,
-                $COL_CAT_ICON TEXT NOT NULL,
-                $COL_CAT_COLOR TEXT NOT NULL,
-                $COL_CAT_IS_CUSTOM INTEGER DEFAULT 0
-            )
-            """.trimIndent()
-        )
-
-        // Create Parties (Khata)
         db.execSQL(
             """
             CREATE TABLE $TABLE_PARTIES (
@@ -101,36 +96,56 @@ class DatabaseHelper(context: Context) :
             """.trimIndent()
         )
 
-        // Create Transactions
         db.execSQL(
             """
-            CREATE TABLE $TABLE_TRANSACTIONS (
-                $COL_TRX_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_TRX_PARTY_ID INTEGER,
-                $COL_TRX_PARTY_NAME TEXT DEFAULT '',
-                $COL_TRX_CATEGORY_ID INTEGER,
-                $COL_TRX_CATEGORY_KEY TEXT DEFAULT '',
-                $COL_TRX_TYPE TEXT NOT NULL,
-                $COL_TRX_AMOUNT REAL NOT NULL,
-                $COL_TRX_DATE TEXT NOT NULL,
-                $COL_TRX_MONTH_KEY TEXT NOT NULL,
-                $COL_TRX_PAY_METHOD TEXT DEFAULT 'Cash',
-                $COL_TRX_STATUS TEXT DEFAULT 'CLEARED',
-                $COL_TRX_NOTES TEXT DEFAULT '',
-                $COL_TRX_CREATED_AT INTEGER NOT NULL
+            CREATE TABLE $TABLE_KHATA_TRX (
+                $COL_KT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_KT_PARTY_ID INTEGER NOT NULL,
+                $COL_KT_PARTY_NAME TEXT NOT NULL,
+                $COL_KT_TYPE TEXT NOT NULL,
+                $COL_KT_AMOUNT REAL NOT NULL,
+                $COL_KT_DATE TEXT NOT NULL,
+                $COL_KT_NOTES TEXT DEFAULT '',
+                $COL_KT_CREATED_AT INTEGER NOT NULL
             )
             """.trimIndent()
         )
 
-        // Create Ration Items
+        db.execSQL(
+            """
+            CREATE TABLE $TABLE_MONTHLY_EXP (
+                $COL_ME_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_ME_MONTH_KEY TEXT NOT NULL,
+                $COL_ME_TITLE TEXT NOT NULL,
+                $COL_ME_AMOUNT REAL NOT NULL,
+                $COL_ME_IS_PAID INTEGER DEFAULT 0,
+                $COL_ME_PAID_DATE TEXT DEFAULT '',
+                $COL_ME_NOTES TEXT DEFAULT ''
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE $TABLE_DAILY_EXP (
+                $COL_DE_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_DE_DATE TEXT NOT NULL,
+                $COL_DE_MONTH_KEY TEXT NOT NULL,
+                $COL_DE_TITLE TEXT NOT NULL,
+                $COL_DE_AMOUNT REAL NOT NULL,
+                $COL_DE_PAY_METHOD TEXT DEFAULT 'Cash',
+                $COL_DE_NOTES TEXT DEFAULT '',
+                $COL_DE_CREATED_AT INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+
         db.execSQL(
             """
             CREATE TABLE $TABLE_RATION (
                 $COL_RAT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COL_RAT_MONTH_KEY TEXT NOT NULL,
-                $COL_RAT_NAME_SD TEXT NOT NULL,
-                $COL_RAT_NAME_UR TEXT NOT NULL,
-                $COL_RAT_NAME_EN TEXT NOT NULL,
+                $COL_RAT_NAME TEXT NOT NULL,
                 $COL_RAT_QTY REAL NOT NULL,
                 $COL_RAT_UNIT TEXT NOT NULL,
                 $COL_RAT_EST_PRICE REAL DEFAULT 0.0,
@@ -141,98 +156,50 @@ class DatabaseHelper(context: Context) :
             """.trimIndent()
         )
 
-        seedDefaultCategories(db)
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Version upgrades handled here
-    }
-
-    private data class CatSeed(
-        val key: String,
-        val nameSd: String,
-        val nameUr: String,
-        val nameEn: String,
-        val icon: String,
-        val color: String
-    )
-
-    private fun seedDefaultCategories(db: SQLiteDatabase) {
-        val defaults = listOf(
-            CatSeed("school_fee", "ٻارن جي اسڪول فيس", "بچوں کی اسکول فیس", "School Fee", "School", "#2563EB"),
-            CatSeed("rickshaw", "اسڪول رڪشا ۽ گاڏي", "اسکول رکشہ", "School Rickshaw", "DirectionsBus", "#D97706"),
-            CatSeed("milkman", "کير وارو", "دودھ والا", "Milkman", "LocalDrink", "#059669"),
-            CatSeed("bills", "بجلي ۽ گئس جا بل", "بجلی اور گیس بل", "Utility Bills", "FlashOn", "#DC2626"),
-            CatSeed("grocery", "گراسري ۽ راشن", "راشن اور سودا سلف", "Grocery", "ShoppingCart", "#7C3AED"),
-            CatSeed("clothing", "ڪپڙا ۽ سينگار", "کپڑے اور سنگھار", "Clothing", "Checkroom", "#DB2777"),
-            CatSeed("tailor", "درزي ۽ سڀائي", "درزی اور سلائی", "Tailoring", "ContentCut", "#475569"),
-            CatSeed("bc", "بي سي / ڪميٽي", "بی سی کمیٹی", "Committee BC", "AccountBalance", "#0D9488"),
-            CatSeed("medical", "علاج ۽ دوائون", "علاج معالجہ و ادویات", "Medical", "LocalHospital", "#E11D48"),
-            CatSeed("other", "ٻيا متفرق خرچ", "دیگر اخراجات", "Other", "MoreHoriz", "#64748B")
+        db.execSQL(
+            """
+            CREATE TABLE $TABLE_CUSTOM_CARDS (
+                $COL_CC_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_CC_TITLE TEXT NOT NULL,
+                $COL_CC_TARGET_TYPE TEXT NOT NULL,
+                $COL_CC_TARGET_ID INTEGER,
+                $COL_CC_ICON TEXT DEFAULT 'Star',
+                $COL_CC_COLOR TEXT DEFAULT '#0F766E'
+            )
+            """.trimIndent()
         )
 
-        for (item in defaults) {
+        // Seed initial monthly expenditures & parties
+        seedInitialData(db)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+
+    private fun seedInitialData(db: SQLiteDatabase) {
+        val currentMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+        val defaultBills = listOf(
+            "بجلي جو بل" to 30000.0,
+            "پاڻي بل" to 4000.0,
+            "اسڪول رڪشا خرچ" to 3000.0,
+            "ٻارن جي اسڪول فيس" to 15000.0,
+            "کير واري جو کاتو" to 8000.0,
+            "گئس جو بل" to 1500.0
+        )
+        for (bill in defaultBills) {
             val cv = ContentValues().apply {
-                put(COL_CAT_KEY, item.key)
-                put(COL_CAT_NAME_SD, item.nameSd)
-                put(COL_CAT_NAME_UR, item.nameUr)
-                put(COL_CAT_NAME_EN, item.nameEn)
-                put(COL_CAT_ICON, item.icon)
-                put(COL_CAT_COLOR, item.color)
-                put(COL_CAT_IS_CUSTOM, 0)
+                put(COL_ME_MONTH_KEY, currentMonth)
+                put(COL_ME_TITLE, bill.first)
+                put(COL_ME_AMOUNT, bill.second)
+                put(COL_ME_IS_PAID, 0)
+                put(COL_ME_PAID_DATE, "")
+                put(COL_ME_NOTES, "")
             }
-            db.insert(TABLE_CATEGORIES, null, cv)
+            db.insert(TABLE_MONTHLY_EXP, null, cv)
         }
     }
 
     // ==========================================
-    // Category Operations
-    // ==========================================
-    fun getAllCategories(): List<CategoryRecord> {
-        val list = mutableListOf<CategoryRecord>()
-        val db = readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_CATEGORIES ORDER BY $COL_CAT_IS_CUSTOM ASC, $COL_CAT_ID ASC", null)
-        cursor.use {
-            while (it.moveToNext()) {
-                list.add(
-                    CategoryRecord(
-                        id = it.getLong(it.getColumnIndexOrThrow(COL_CAT_ID)),
-                        key = it.getString(it.getColumnIndexOrThrow(COL_CAT_KEY)),
-                        nameSd = it.getString(it.getColumnIndexOrThrow(COL_CAT_NAME_SD)),
-                        nameUr = it.getString(it.getColumnIndexOrThrow(COL_CAT_NAME_UR)),
-                        nameEn = it.getString(it.getColumnIndexOrThrow(COL_CAT_NAME_EN)),
-                        icon = it.getString(it.getColumnIndexOrThrow(COL_CAT_ICON)),
-                        color = it.getString(it.getColumnIndexOrThrow(COL_CAT_COLOR)),
-                        isCustom = it.getInt(it.getColumnIndexOrThrow(COL_CAT_IS_CUSTOM)) == 1
-                    )
-                )
-            }
-        }
-        return list
-    }
-
-    fun addCustomCategory(nameSd: String, nameUr: String, nameEn: String, icon: String, color: String): Long {
-        val db = writableDatabase
-        val key = "custom_" + System.currentTimeMillis()
-        val cv = ContentValues().apply {
-            put(COL_CAT_KEY, key)
-            put(COL_CAT_NAME_SD, nameSd.ifBlank { nameEn })
-            put(COL_CAT_NAME_UR, nameUr.ifBlank { nameSd })
-            put(COL_CAT_NAME_EN, nameEn.ifBlank { nameSd })
-            put(COL_CAT_ICON, icon)
-            put(COL_CAT_COLOR, color)
-            put(COL_CAT_IS_CUSTOM, 1)
-        }
-        return db.insert(TABLE_CATEGORIES, null, cv)
-    }
-
-    fun deleteCategory(id: Long) {
-        val db = writableDatabase
-        db.delete(TABLE_CATEGORIES, "$COL_CAT_ID = ? AND $COL_CAT_IS_CUSTOM = 1", arrayOf(id.toString()))
-    }
-
-    // ==========================================
-    // Party (Khata) Operations
+    // 1. Udhar Khata (Parties & Transactions)
     // ==========================================
     fun getAllParties(): List<PartyRecord> {
         val list = mutableListOf<PartyRecord>()
@@ -267,157 +234,91 @@ class DatabaseHelper(context: Context) :
             put(COL_PARTY_UPDATED_AT, now)
             put(COL_PARTY_NOTES, notes)
         }
-        val partyId = db.insert(TABLE_PARTIES, null, cv)
-
+        val pId = db.insert(TABLE_PARTIES, null, cv)
         if (initialBalance > 0) {
-            val monthKey = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
             val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val trxType = if (type == "LENDER") "KHATA_GIVE" else "KHATA_RECEIVE"
-            addTransaction(
-                partyId = partyId,
-                partyName = name,
-                categoryId = null,
-                categoryKey = "khata",
-                type = trxType,
-                amount = initialBalance,
-                date = dateStr,
-                monthKey = monthKey,
-                paymentMethod = "Cash",
-                status = "PENDING",
-                notes = if (notes.isNotBlank()) notes else "Initial Khata balance"
-            )
+            val trxType = if (type == "LENDER") "CREDIT" else "DEBIT"
+            addKhataTransaction(pId, name, trxType, initialBalance, "ابتدائي بيلنس (Initial balance)")
         }
-        return partyId
+        return pId
     }
 
-    fun updatePartyBalance(partyId: Long, newBalance: Double) {
+    fun addKhataTransaction(partyId: Long, partyName: String, type: String, amount: Double, notes: String): Long {
         val db = writableDatabase
-        val now = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val cv = ContentValues().apply {
-            put(COL_PARTY_BALANCE, newBalance)
-            put(COL_PARTY_UPDATED_AT, now)
+            put(COL_KT_PARTY_ID, partyId)
+            put(COL_KT_PARTY_NAME, partyName)
+            put(COL_KT_TYPE, type)
+            put(COL_KT_AMOUNT, amount)
+            put(COL_KT_DATE, dateStr)
+            put(COL_KT_NOTES, notes)
+            put(COL_KT_CREATED_AT, System.currentTimeMillis())
         }
-        db.update(TABLE_PARTIES, cv, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
+        val id = db.insert(TABLE_KHATA_TRX, null, cv)
+        recalculatePartyBalance(partyId)
+        return id
     }
 
     fun clearPartyAccount(partyId: Long, partyName: String) {
         val db = writableDatabase
-        val now = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val cv = ContentValues().apply {
+            put(COL_KT_PARTY_ID, partyId)
+            put(COL_KT_PARTY_NAME, partyName)
+            put(COL_KT_TYPE, "CLEAR")
+            put(COL_KT_AMOUNT, 0.0)
+            put(COL_KT_DATE, dateStr)
+            put(COL_KT_NOTES, "حساب صاف ٿي ويو (Account Cleared)")
+            put(COL_KT_CREATED_AT, System.currentTimeMillis())
+        }
+        db.insert(TABLE_KHATA_TRX, null, cv)
+
+        val now = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        val partyCv = ContentValues().apply {
             put(COL_PARTY_BALANCE, 0.0)
             put(COL_PARTY_UPDATED_AT, now)
         }
-        db.update(TABLE_PARTIES, cv, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
-
-        // Add clear transaction
-        val monthKey = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
-        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        addTransaction(
-            partyId = partyId,
-            partyName = partyName,
-            categoryId = null,
-            categoryKey = "khata",
-            type = "KHATA_CLEAR",
-            amount = 0.0,
-            date = dateStr,
-            monthKey = monthKey,
-            paymentMethod = "Cash",
-            status = "CLEARED",
-            notes = "حساب صاف ٿي ويو (Account Cleared)"
-        )
+        db.update(TABLE_PARTIES, partyCv, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
     }
 
-    // ==========================================
-    // Transaction Operations
-    // ==========================================
-    fun addTransaction(
-        partyId: Long?,
-        partyName: String,
-        categoryId: Long?,
-        categoryKey: String,
-        type: String,
-        amount: Double,
-        date: String,
-        monthKey: String,
-        paymentMethod: String,
-        status: String = "CLEARED",
-        notes: String
-    ): Long {
+    fun deleteParty(partyId: Long) {
         val db = writableDatabase
-        val cv = ContentValues().apply {
-            if (partyId != null) put(COL_TRX_PARTY_ID, partyId)
-            put(COL_TRX_PARTY_NAME, partyName)
-            if (categoryId != null) put(COL_TRX_CATEGORY_ID, categoryId)
-            put(COL_TRX_CATEGORY_KEY, categoryKey)
-            put(COL_TRX_TYPE, type)
-            put(COL_TRX_AMOUNT, amount)
-            put(COL_TRX_DATE, date)
-            put(COL_TRX_MONTH_KEY, monthKey)
-            put(COL_TRX_PAY_METHOD, paymentMethod)
-            put(COL_TRX_STATUS, status)
-            put(COL_TRX_NOTES, notes)
-            put(COL_TRX_CREATED_AT, System.currentTimeMillis())
-        }
-        val id = db.insert(TABLE_TRANSACTIONS, null, cv)
-
-        // Automatically update party balance if linked to a party
-        if (partyId != null && partyId > 0) {
-            recalculatePartyBalance(partyId)
-        }
-
-        return id
+        db.delete(TABLE_PARTIES, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
+        db.delete(TABLE_KHATA_TRX, "$COL_KT_PARTY_ID = ?", arrayOf(partyId.toString()))
     }
 
-    fun getTransactionsByMonth(monthKey: String): List<TransactionRecord> {
-        val list = mutableListOf<TransactionRecord>()
+    fun getPartyTransactions(partyId: Long): List<KhataTransaction> {
+        val list = mutableListOf<KhataTransaction>()
         val db = readableDatabase
         val cursor = db.rawQuery(
-            "SELECT * FROM $TABLE_TRANSACTIONS WHERE $COL_TRX_MONTH_KEY = ? ORDER BY $COL_TRX_DATE DESC, $COL_TRX_CREATED_AT DESC",
-            arrayOf(monthKey)
-        )
-        cursor.use {
-            while (it.moveToNext()) {
-                list.add(extractTransactionFromCursor(it))
-            }
-        }
-        return list
-    }
-
-    fun getTransactionsByParty(partyId: Long): List<TransactionRecord> {
-        val list = mutableListOf<TransactionRecord>()
-        val db = readableDatabase
-        val cursor = db.rawQuery(
-            "SELECT * FROM $TABLE_TRANSACTIONS WHERE $COL_TRX_PARTY_ID = ? ORDER BY $COL_TRX_DATE DESC, $COL_TRX_CREATED_AT DESC",
+            "SELECT * FROM $TABLE_KHATA_TRX WHERE $COL_KT_PARTY_ID = ? ORDER BY $COL_KT_CREATED_AT DESC",
             arrayOf(partyId.toString())
         )
         cursor.use {
             while (it.moveToNext()) {
-                list.add(extractTransactionFromCursor(it))
+                list.add(
+                    KhataTransaction(
+                        id = it.getLong(it.getColumnIndexOrThrow(COL_KT_ID)),
+                        partyId = it.getLong(it.getColumnIndexOrThrow(COL_KT_PARTY_ID)),
+                        partyName = it.getString(it.getColumnIndexOrThrow(COL_KT_PARTY_NAME)),
+                        type = it.getString(it.getColumnIndexOrThrow(COL_KT_TYPE)),
+                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_KT_AMOUNT)),
+                        date = it.getString(it.getColumnIndexOrThrow(COL_KT_DATE)),
+                        notes = it.getString(it.getColumnIndexOrThrow(COL_KT_NOTES)),
+                        createdAt = it.getLong(it.getColumnIndexOrThrow(COL_KT_CREATED_AT))
+                    )
+                )
             }
         }
         return list
-    }
-
-    fun deleteTransaction(id: Long) {
-        val db = writableDatabase
-        var partyId: Long? = null
-        val cursor = db.rawQuery("SELECT $COL_TRX_PARTY_ID FROM $TABLE_TRANSACTIONS WHERE $COL_TRX_ID = ?", arrayOf(id.toString()))
-        cursor.use {
-            if (it.moveToFirst() && !it.isNull(0)) {
-                partyId = it.getLong(0)
-            }
-        }
-        db.delete(TABLE_TRANSACTIONS, "$COL_TRX_ID = ?", arrayOf(id.toString()))
-        if (partyId != null && partyId!! > 0) {
-            recalculatePartyBalance(partyId!!)
-        }
     }
 
     private fun recalculatePartyBalance(partyId: Long) {
         val db = writableDatabase
         var balance = 0.0
         val cursor = db.rawQuery(
-            "SELECT $COL_TRX_TYPE, $COL_TRX_AMOUNT FROM $TABLE_TRANSACTIONS WHERE $COL_TRX_PARTY_ID = ?",
+            "SELECT $COL_KT_TYPE, $COL_KT_AMOUNT FROM $TABLE_KHATA_TRX WHERE $COL_KT_PARTY_ID = ?",
             arrayOf(partyId.toString())
         )
         cursor.use {
@@ -425,9 +326,9 @@ class DatabaseHelper(context: Context) :
                 val type = it.getString(0)
                 val amount = it.getDouble(1)
                 when (type) {
-                    "KHATA_GIVE" -> balance += amount
-                    "KHATA_RECEIVE" -> balance -= amount
-                    "KHATA_CLEAR" -> balance = 0.0
+                    "DEBIT" -> balance += amount
+                    "CREDIT" -> balance -= amount
+                    "CLEAR" -> balance = 0.0
                 }
             }
         }
@@ -439,96 +340,136 @@ class DatabaseHelper(context: Context) :
         db.update(TABLE_PARTIES, cv, "$COL_PARTY_ID = ?", arrayOf(partyId.toString()))
     }
 
-    private fun extractTransactionFromCursor(it: Cursor): TransactionRecord {
-        val partyId = if (it.isNull(it.getColumnIndexOrThrow(COL_TRX_PARTY_ID))) null else it.getLong(it.getColumnIndexOrThrow(COL_TRX_PARTY_ID))
-        val categoryId = if (it.isNull(it.getColumnIndexOrThrow(COL_TRX_CATEGORY_ID))) null else it.getLong(it.getColumnIndexOrThrow(COL_TRX_CATEGORY_ID))
-        return TransactionRecord(
-            id = it.getLong(it.getColumnIndexOrThrow(COL_TRX_ID)),
-            partyId = partyId,
-            partyName = it.getString(it.getColumnIndexOrThrow(COL_TRX_PARTY_NAME)),
-            categoryId = categoryId,
-            categoryKey = it.getString(it.getColumnIndexOrThrow(COL_TRX_CATEGORY_KEY)),
-            type = it.getString(it.getColumnIndexOrThrow(COL_TRX_TYPE)),
-            amount = it.getDouble(it.getColumnIndexOrThrow(COL_TRX_AMOUNT)),
-            date = it.getString(it.getColumnIndexOrThrow(COL_TRX_DATE)),
-            monthKey = it.getString(it.getColumnIndexOrThrow(COL_TRX_MONTH_KEY)),
-            paymentMethod = it.getString(it.getColumnIndexOrThrow(COL_TRX_PAY_METHOD)),
-            status = it.getString(it.getColumnIndexOrThrow(COL_TRX_STATUS)),
-            notes = it.getString(it.getColumnIndexOrThrow(COL_TRX_NOTES)),
-            createdAt = it.getLong(it.getColumnIndexOrThrow(COL_TRX_CREATED_AT))
-        )
-    }
-
     // ==========================================
-    // Monthly Summary Calculation
+    // 2. Monthly House Expenditures (Fixed / Todo)
     // ==========================================
-    fun getMonthSummary(monthKey: String): MonthSummary {
+    fun getMonthlyExpenditures(monthKey: String): List<MonthlyExpenditure> {
+        val list = mutableListOf<MonthlyExpenditure>()
         val db = readableDatabase
-        var inflow = 0.0
-        var outflow = 0.0
-
         val cursor = db.rawQuery(
-            "SELECT $COL_TRX_TYPE, SUM($COL_TRX_AMOUNT) FROM $TABLE_TRANSACTIONS WHERE $COL_TRX_MONTH_KEY = ? GROUP BY $COL_TRX_TYPE",
+            "SELECT * FROM $TABLE_MONTHLY_EXP WHERE $COL_ME_MONTH_KEY = ? ORDER BY $COL_ME_IS_PAID ASC, $COL_ME_ID ASC",
             arrayOf(monthKey)
         )
         cursor.use {
             while (it.moveToNext()) {
-                val type = it.getString(0)
-                val sum = it.getDouble(1)
-                when (type) {
-                    "INFLOW" -> inflow += sum
-                    "OUTFLOW" -> outflow += sum
-                }
+                list.add(
+                    MonthlyExpenditure(
+                        id = it.getLong(it.getColumnIndexOrThrow(COL_ME_ID)),
+                        monthKey = it.getString(it.getColumnIndexOrThrow(COL_ME_MONTH_KEY)),
+                        title = it.getString(it.getColumnIndexOrThrow(COL_ME_TITLE)),
+                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_ME_AMOUNT)),
+                        isPaid = it.getInt(it.getColumnIndexOrThrow(COL_ME_IS_PAID)) == 1,
+                        paidDate = it.getString(it.getColumnIndexOrThrow(COL_ME_PAID_DATE)),
+                        notes = it.getString(it.getColumnIndexOrThrow(COL_ME_NOTES))
+                    )
+                )
             }
         }
+        return list
+    }
 
-        // Khata balances
-        var owedToUs = 0.0
-        var weOwe = 0.0
-        val partyCursor = db.rawQuery("SELECT $COL_PARTY_TYPE, $COL_PARTY_BALANCE FROM $TABLE_PARTIES", null)
-        partyCursor.use {
-            while (it.moveToNext()) {
-                val pType = it.getString(0)
-                val bal = it.getDouble(1)
-                if (bal > 0) {
-                    if (pType == "LENDER") weOwe += bal else owedToUs += bal
-                }
-            }
+    fun addMonthlyExpenditure(monthKey: String, title: String, amount: Double, notes: String): Long {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_ME_MONTH_KEY, monthKey)
+            put(COL_ME_TITLE, title)
+            put(COL_ME_AMOUNT, amount)
+            put(COL_ME_IS_PAID, 0)
+            put(COL_ME_PAID_DATE, "")
+            put(COL_ME_NOTES, notes)
         }
+        return db.insert(TABLE_MONTHLY_EXP, null, cv)
+    }
 
-        // Ration summary for the month
-        var rationTotal = 0.0
-        var boughtCount = 0
-        var totalCount = 0
-        val ratCursor = db.rawQuery("SELECT $COL_RAT_ACT_PRICE, $COL_RAT_EST_PRICE, $COL_RAT_PURCHASED FROM $TABLE_RATION WHERE $COL_RAT_MONTH_KEY = ?", arrayOf(monthKey))
-        ratCursor.use {
-            while (it.moveToNext()) {
-                totalCount++
-                val actPrice = it.getDouble(0)
-                val estPrice = it.getDouble(1)
-                val isPurchased = it.getInt(2) == 1
-                if (isPurchased) {
-                    boughtCount++
-                    rationTotal += if (actPrice > 0) actPrice else estPrice
-                }
-            }
+    fun toggleMonthlyExpenditurePaid(id: Long, isPaid: Boolean) {
+        val db = writableDatabase
+        val now = if (isPaid) SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) else ""
+        val cv = ContentValues().apply {
+            put(COL_ME_IS_PAID, if (isPaid) 1 else 0)
+            put(COL_ME_PAID_DATE, now)
         }
+        db.update(TABLE_MONTHLY_EXP, cv, "$COL_ME_ID = ?", arrayOf(id.toString()))
+    }
 
-        return MonthSummary(
-            monthKey = monthKey,
-            totalInflow = inflow,
-            totalOutflow = outflow,
-            netBalance = inflow - outflow,
-            khataOwedToUs = owedToUs,
-            khataWeOwe = weOwe,
-            rationTotal = rationTotal,
-            rationBoughtCount = boughtCount,
-            rationTotalCount = totalCount
-        )
+    fun deleteMonthlyExpenditure(id: Long) {
+        val db = writableDatabase
+        db.delete(TABLE_MONTHLY_EXP, "$COL_ME_ID = ?", arrayOf(id.toString()))
+    }
+
+    // Bring / Copy previous month's expenditures into target month!
+    fun copyMonthlyExpendituresFromPreviousMonth(fromMonthKey: String, toMonthKey: String): Int {
+        val prevItems = getMonthlyExpenditures(fromMonthKey)
+        if (prevItems.isEmpty()) return 0
+
+        val db = writableDatabase
+        var copiedCount = 0
+        for (item in prevItems) {
+            val cv = ContentValues().apply {
+                put(COL_ME_MONTH_KEY, toMonthKey)
+                put(COL_ME_TITLE, item.title)
+                put(COL_ME_AMOUNT, item.amount)
+                put(COL_ME_IS_PAID, 0) // reset to unpaid for the new month!
+                put(COL_ME_PAID_DATE, "")
+                put(COL_ME_NOTES, item.notes)
+            }
+            db.insert(TABLE_MONTHLY_EXP, null, cv)
+            copiedCount++
+        }
+        return copiedCount
     }
 
     // ==========================================
-    // Ration / Grocery Operations
+    // 3. Daily Expenses Log
+    // ==========================================
+    fun getDailyExpenses(monthKey: String): List<DailyExpense> {
+        val list = mutableListOf<DailyExpense>()
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT * FROM $TABLE_DAILY_EXP WHERE $COL_DE_MONTH_KEY = ? ORDER BY $COL_DE_DATE DESC, $COL_DE_CREATED_AT DESC",
+            arrayOf(monthKey)
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    DailyExpense(
+                        id = it.getLong(it.getColumnIndexOrThrow(COL_DE_ID)),
+                        date = it.getString(it.getColumnIndexOrThrow(COL_DE_DATE)),
+                        monthKey = it.getString(it.getColumnIndexOrThrow(COL_DE_MONTH_KEY)),
+                        title = it.getString(it.getColumnIndexOrThrow(COL_DE_TITLE)),
+                        amount = it.getDouble(it.getColumnIndexOrThrow(COL_DE_AMOUNT)),
+                        paymentMethod = it.getString(it.getColumnIndexOrThrow(COL_DE_PAY_METHOD)),
+                        notes = it.getString(it.getColumnIndexOrThrow(COL_DE_NOTES)),
+                        createdAt = it.getLong(it.getColumnIndexOrThrow(COL_DE_CREATED_AT))
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun addDailyExpense(title: String, amount: Double, paymentMethod: String, notes: String): Long {
+        val db = writableDatabase
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val monthKey = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+        val cv = ContentValues().apply {
+            put(COL_DE_DATE, today)
+            put(COL_DE_MONTH_KEY, monthKey)
+            put(COL_DE_TITLE, title)
+            put(COL_DE_AMOUNT, amount)
+            put(COL_DE_PAY_METHOD, paymentMethod)
+            put(COL_DE_NOTES, notes)
+            put(COL_DE_CREATED_AT, System.currentTimeMillis())
+        }
+        return db.insert(TABLE_DAILY_EXP, null, cv)
+    }
+
+    fun deleteDailyExpense(id: Long) {
+        val db = writableDatabase
+        db.delete(TABLE_DAILY_EXP, "$COL_DE_ID = ?", arrayOf(id.toString()))
+    }
+
+    // ==========================================
+    // 4. Monthly Ration / Grocery Checklist
     // ==========================================
     fun getRationItems(monthKey: String): List<RationItem> {
         val list = mutableListOf<RationItem>()
@@ -540,9 +481,7 @@ class DatabaseHelper(context: Context) :
                     RationItem(
                         id = it.getLong(it.getColumnIndexOrThrow(COL_RAT_ID)),
                         monthKey = it.getString(it.getColumnIndexOrThrow(COL_RAT_MONTH_KEY)),
-                        nameSd = it.getString(it.getColumnIndexOrThrow(COL_RAT_NAME_SD)),
-                        nameUr = it.getString(it.getColumnIndexOrThrow(COL_RAT_NAME_UR)),
-                        nameEn = it.getString(it.getColumnIndexOrThrow(COL_RAT_NAME_EN)),
+                        name = it.getString(it.getColumnIndexOrThrow(COL_RAT_NAME)),
                         quantity = it.getDouble(it.getColumnIndexOrThrow(COL_RAT_QTY)),
                         unit = it.getString(it.getColumnIndexOrThrow(COL_RAT_UNIT)),
                         estimatedPrice = it.getDouble(it.getColumnIndexOrThrow(COL_RAT_EST_PRICE)),
@@ -553,39 +492,23 @@ class DatabaseHelper(context: Context) :
                 )
             }
         }
-
-        // If list is empty for this month, seed default grocery essentials for household
         if (list.isEmpty()) {
-            seedDefaultRationItems(monthKey)
+            seedDefaultRation(monthKey)
             return getRationItems(monthKey)
         }
-
         return list
     }
 
-    fun addRationItem(
-        monthKey: String,
-        nameSd: String,
-        nameUr: String,
-        nameEn: String,
-        quantity: Double,
-        unit: String,
-        estPrice: Double,
-        actualPrice: Double,
-        isPurchased: Boolean,
-        notes: String
-    ): Long {
+    fun addRationItem(monthKey: String, name: String, qty: Double, unit: String, estPrice: Double, notes: String): Long {
         val db = writableDatabase
         val cv = ContentValues().apply {
             put(COL_RAT_MONTH_KEY, monthKey)
-            put(COL_RAT_NAME_SD, nameSd.ifBlank { nameEn })
-            put(COL_RAT_NAME_UR, nameUr.ifBlank { nameSd })
-            put(COL_RAT_NAME_EN, nameEn.ifBlank { nameSd })
-            put(COL_RAT_QTY, quantity)
+            put(COL_RAT_NAME, name)
+            put(COL_RAT_QTY, qty)
             put(COL_RAT_UNIT, unit)
             put(COL_RAT_EST_PRICE, estPrice)
-            put(COL_RAT_ACT_PRICE, actualPrice)
-            put(COL_RAT_PURCHASED, if (isPurchased) 1 else 0)
+            put(COL_RAT_ACT_PRICE, 0.0)
+            put(COL_RAT_PURCHASED, 0)
             put(COL_RAT_NOTES, notes)
         }
         return db.insert(TABLE_RATION, null, cv)
@@ -605,35 +528,23 @@ class DatabaseHelper(context: Context) :
         db.delete(TABLE_RATION, "$COL_RAT_ID = ?", arrayOf(id.toString()))
     }
 
-    private data class RationSeed(
-        val nameSd: String,
-        val nameUr: String,
-        val nameEn: String,
-        val qty: Double,
-        val unit: String
-    )
-
-    private fun seedDefaultRationItems(monthKey: String) {
+    private fun seedDefaultRation(monthKey: String) {
         val defaults = listOf(
-            RationSeed("کنڊ", "چینی", "Sugar", 3.0, "kg"),
-            RationSeed("اٽو", "آٹا", "Wheat Flour", 10.0, "kg"),
-            RationSeed("چانور", "چاول", "Rice", 5.0, "kg"),
-            RationSeed("تيل / گيهه", "تیل / گھی", "Cooking Oil / Ghee", 5.0, "kg"),
-            RationSeed("شيمپو", "شیمپو", "Shampoo (500 ml)", 1.0, "bottle"),
-            RationSeed("چانهه جي پتي", "چائے کی پتی", "Tea Leaves", 500.0, "gm"),
-            RationSeed("ڌوئڻ ۽ وهنجڻ جا صابڻ", "صابن", "Soaps", 6.0, "piece"),
-            RationSeed("دال چنا ۽ مونگ", "دال چنا / مونگ", "Pulses / Lentils", 2.0, "kg")
+            Triple("کنڊ", 3.0, "kg"),
+            Triple("اٽو", 10.0, "kg"),
+            Triple("چانور", 5.0, "kg"),
+            Triple("تيل / گيهه", 5.0, "kg"),
+            Triple("شيمپو", 1.0, "bottle"),
+            Triple("چانهه جي پتي", 500.0, "gm"),
+            Triple("صابڻ", 6.0, "piece")
         )
-
         val db = writableDatabase
         for (item in defaults) {
             val cv = ContentValues().apply {
                 put(COL_RAT_MONTH_KEY, monthKey)
-                put(COL_RAT_NAME_SD, item.nameSd)
-                put(COL_RAT_NAME_UR, item.nameUr)
-                put(COL_RAT_NAME_EN, item.nameEn)
-                put(COL_RAT_QTY, item.qty)
-                put(COL_RAT_UNIT, item.unit)
+                put(COL_RAT_NAME, item.first)
+                put(COL_RAT_QTY, item.second)
+                put(COL_RAT_UNIT, item.third)
                 put(COL_RAT_EST_PRICE, 0.0)
                 put(COL_RAT_ACT_PRICE, 0.0)
                 put(COL_RAT_PURCHASED, 0)
@@ -641,5 +552,130 @@ class DatabaseHelper(context: Context) :
             }
             db.insert(TABLE_RATION, null, cv)
         }
+    }
+
+    // ==========================================
+    // 5. Custom Dashboard Cards
+    // ==========================================
+    fun getCustomCards(): List<CustomCard> {
+        val list = mutableListOf<CustomCard>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_CUSTOM_CARDS ORDER BY $COL_CC_ID ASC", null)
+        cursor.use {
+            while (it.moveToNext()) {
+                val targetId = if (it.isNull(it.getColumnIndexOrThrow(COL_CC_TARGET_ID))) null else it.getLong(it.getColumnIndexOrThrow(COL_CC_TARGET_ID))
+                list.add(
+                    CustomCard(
+                        id = it.getLong(it.getColumnIndexOrThrow(COL_CC_ID)),
+                        title = it.getString(it.getColumnIndexOrThrow(COL_CC_TITLE)),
+                        targetType = it.getString(it.getColumnIndexOrThrow(COL_CC_TARGET_TYPE)),
+                        targetId = targetId,
+                        icon = it.getString(it.getColumnIndexOrThrow(COL_CC_ICON)),
+                        color = it.getString(it.getColumnIndexOrThrow(COL_CC_COLOR))
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun addCustomCard(title: String, targetType: String, targetId: Long?, icon: String, color: String): Long {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_CC_TITLE, title)
+            put(COL_CC_TARGET_TYPE, targetType)
+            if (targetId != null) put(COL_CC_TARGET_ID, targetId)
+            put(COL_CC_ICON, icon)
+            put(COL_CC_COLOR, color)
+        }
+        return db.insert(TABLE_CUSTOM_CARDS, null, cv)
+    }
+
+    fun deleteCustomCard(id: Long) {
+        val db = writableDatabase
+        db.delete(TABLE_CUSTOM_CARDS, "$COL_CC_ID = ?", arrayOf(id.toString()))
+    }
+
+    // ==========================================
+    // Dashboard Summary Calculations
+    // ==========================================
+    fun getDashboardSummary(monthKey: String): DashboardSummary {
+        val db = readableDatabase
+        var billsTotal = 0.0
+        var billsPaid = 0.0
+        var billsUnpaid = 0.0
+        var pendingCount = 0
+
+        val meCursor = db.rawQuery(
+            "SELECT $COL_ME_AMOUNT, $COL_ME_IS_PAID FROM $TABLE_MONTHLY_EXP WHERE $COL_ME_MONTH_KEY = ?",
+            arrayOf(monthKey)
+        )
+        meCursor.use {
+            while (it.moveToNext()) {
+                val amt = it.getDouble(0)
+                val isPaid = it.getInt(1) == 1
+                billsTotal += amt
+                if (isPaid) billsPaid += amt else {
+                    billsUnpaid += amt
+                    pendingCount++
+                }
+            }
+        }
+
+        var dailyTotal = 0.0
+        val deCursor = db.rawQuery(
+            "SELECT SUM($COL_DE_AMOUNT) FROM $TABLE_DAILY_EXP WHERE $COL_DE_MONTH_KEY = ?",
+            arrayOf(monthKey)
+        )
+        deCursor.use {
+            if (it.moveToFirst() && !it.isNull(0)) dailyTotal = it.getDouble(0)
+        }
+
+        var rationTotal = 0.0
+        var rationBought = 0
+        var rationCount = 0
+        val ratCursor = db.rawQuery(
+            "SELECT $COL_RAT_ACT_PRICE, $COL_RAT_EST_PRICE, $COL_RAT_PURCHASED FROM $TABLE_RATION WHERE $COL_RAT_MONTH_KEY = ?",
+            arrayOf(monthKey)
+        )
+        ratCursor.use {
+            while (it.moveToNext()) {
+                rationCount++
+                val actPrice = it.getDouble(0)
+                val estPrice = it.getDouble(1)
+                val isPurchased = it.getInt(2) == 1
+                if (isPurchased) {
+                    rationBought++
+                    rationTotal += if (actPrice > 0) actPrice else estPrice
+                }
+            }
+        }
+
+        var weOwe = 0.0
+        var owedToUs = 0.0
+        val partyCursor = db.rawQuery("SELECT $COL_PARTY_TYPE, $COL_PARTY_BALANCE FROM $TABLE_PARTIES", null)
+        partyCursor.use {
+            while (it.moveToNext()) {
+                val pType = it.getString(0)
+                val bal = it.getDouble(1)
+                if (bal > 0) {
+                    if (pType == "LENDER") weOwe += bal else owedToUs += bal
+                }
+            }
+        }
+
+        return DashboardSummary(
+            monthKey = monthKey,
+            monthlyBillsTotal = billsTotal,
+            monthlyBillsPaid = billsPaid,
+            monthlyBillsUnpaid = billsUnpaid,
+            monthlyBillsPendingCount = pendingCount,
+            dailyExpensesTotal = dailyTotal,
+            rationTotal = rationTotal,
+            rationBoughtCount = rationBought,
+            rationTotalCount = rationCount,
+            khataWeOwe = weOwe,
+            khataOwedToUs = owedToUs
+        )
     }
 }

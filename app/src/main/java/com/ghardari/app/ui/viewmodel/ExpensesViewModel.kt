@@ -17,8 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class ExpensesViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -34,31 +33,41 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     )
     val currentMonthKey: StateFlow<String> = _currentMonthKey.asStateFlow()
 
-    private val _currentTab = MutableStateFlow(0)
-    val currentTab: StateFlow<Int> = _currentTab.asStateFlow()
+    // Screen navigation: "HOME", "KHATA", "MONTHLY", "DAILY", "RATION", "SETTINGS"
+    private val _currentScreen = MutableStateFlow("HOME")
+    val currentScreen: StateFlow<String> = _currentScreen.asStateFlow()
 
-    private val _summary = MutableStateFlow(MonthSummary(_currentMonthKey.value))
-    val summary: StateFlow<MonthSummary> = _summary.asStateFlow()
+    private val _selectedParty = MutableStateFlow<PartyRecord?>(null)
+    val selectedParty: StateFlow<PartyRecord?> = _selectedParty.asStateFlow()
 
-    private val _transactions = MutableStateFlow<List<TransactionRecord>>(emptyList())
-    val transactions: StateFlow<List<TransactionRecord>> = _transactions.asStateFlow()
-
-    private val _categories = MutableStateFlow<List<CategoryRecord>>(emptyList())
-    val categories: StateFlow<List<CategoryRecord>> = _categories.asStateFlow()
+    private val _summary = MutableStateFlow(DashboardSummary(_currentMonthKey.value))
+    val summary: StateFlow<DashboardSummary> = _summary.asStateFlow()
 
     private val _parties = MutableStateFlow<List<PartyRecord>>(emptyList())
     val parties: StateFlow<List<PartyRecord>> = _parties.asStateFlow()
 
+    private val _partyTransactions = MutableStateFlow<List<KhataTransaction>>(emptyList())
+    val partyTransactions: StateFlow<List<KhataTransaction>> = _partyTransactions.asStateFlow()
+
+    private val _monthlyExpenditures = MutableStateFlow<List<MonthlyExpenditure>>(emptyList())
+    val monthlyExpenditures: StateFlow<List<MonthlyExpenditure>> = _monthlyExpenditures.asStateFlow()
+
+    private val _dailyExpenses = MutableStateFlow<List<DailyExpense>>(emptyList())
+    val dailyExpenses: StateFlow<List<DailyExpense>> = _dailyExpenses.asStateFlow()
+
     private val _rationItems = MutableStateFlow<List<RationItem>>(emptyList())
     val rationItems: StateFlow<List<RationItem>> = _rationItems.asStateFlow()
+
+    private val _customCards = MutableStateFlow<List<CustomCard>>(emptyList())
+    val customCards: StateFlow<List<CustomCard>> = _customCards.asStateFlow()
 
     init {
         val dbHelper = DatabaseHelper(application)
         repository = ExpensesRepository(dbHelper)
         backupManager = BackupManager(application, repository)
 
-        val savedLangCode = prefs.getString("language", AppLanguage.SINDHI.code)
-        _language.value = AppLanguage.values().find { it.code == savedLangCode } ?: AppLanguage.SINDHI
+        val savedLang = prefs.getString("language", AppLanguage.SINDHI.code)
+        _language.value = AppLanguage.values().find { it.code == savedLang } ?: AppLanguage.SINDHI
 
         refreshAll()
     }
@@ -68,8 +77,11 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().putString("language", lang.code).apply()
     }
 
-    fun setTab(index: Int) {
-        _currentTab.value = index
+    fun navigateTo(screen: String) {
+        _currentScreen.value = screen
+        if (screen != "KHATA_DETAIL") {
+            _selectedParty.value = null
+        }
     }
 
     fun setMonthKey(monthKey: String) {
@@ -80,50 +92,35 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     fun refreshAll() {
         viewModelScope.launch {
             val mKey = _currentMonthKey.value
-            _categories.value = repository.getCategories()
             _parties.value = repository.getParties()
-            _transactions.value = repository.getTransactionsByMonth(mKey)
+            _monthlyExpenditures.value = repository.getMonthlyExpenditures(mKey)
+            _dailyExpenses.value = repository.getDailyExpenses(mKey)
             _rationItems.value = repository.getRationItems(mKey)
-            _summary.value = repository.getMonthSummary(mKey)
+            _customCards.value = repository.getCustomCards()
+            _summary.value = repository.getDashboardSummary(mKey)
+
+            val currentP = _selectedParty.value
+            if (currentP != null) {
+                _partyTransactions.value = repository.getPartyTransactions(currentP.id)
+                _selectedParty.value = repository.getParties().find { it.id == currentP.id }
+            }
         }
     }
 
-    // 1-Click Fast Transaction Add
-    fun addTransaction(
-        partyId: Long?,
-        partyName: String,
-        categoryId: Long?,
-        categoryKey: String,
-        type: String,
-        amount: Double,
-        paymentMethod: String,
-        notes: String
-    ) {
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        repository.addTransaction(
-            partyId = partyId,
-            partyName = partyName,
-            categoryId = categoryId,
-            categoryKey = categoryKey,
-            type = type,
-            amount = amount,
-            date = today,
-            monthKey = _currentMonthKey.value,
-            paymentMethod = paymentMethod,
-            status = "CLEARED",
-            notes = notes
-        )
-        refreshAll()
+    // 1. Udhar Khata
+    fun selectParty(party: PartyRecord) {
+        _selectedParty.value = party
+        _partyTransactions.value = repository.getPartyTransactions(party.id)
+        _currentScreen.value = "KHATA_DETAIL"
     }
 
-    fun deleteTransaction(id: Long) {
-        repository.deleteTransaction(id)
-        refreshAll()
-    }
-
-    // Party / Khata
     fun addParty(name: String, phone: String, type: String, initialBalance: Double, notes: String) {
         repository.addParty(name, phone, type, initialBalance, notes)
+        refreshAll()
+    }
+
+    fun addKhataTransaction(partyId: Long, partyName: String, type: String, amount: Double, notes: String) {
+        repository.addKhataTransaction(partyId, partyName, type, amount, notes)
         refreshAll()
     }
 
@@ -132,9 +129,18 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         refreshAll()
     }
 
+    fun deleteParty(partyId: Long) {
+        repository.deleteParty(partyId)
+        if (_selectedParty.value?.id == partyId) {
+            _selectedParty.value = null
+            _currentScreen.value = "KHATA"
+        }
+        refreshAll()
+    }
+
     fun sharePartyViaWhatsApp(party: PartyRecord) {
-        val partyTrx = repository.getTransactionsByParty(party.id)
-        val text = backupManager.generateWhatsAppStatement(party, partyTrx, _language.value)
+        val list = repository.getPartyTransactions(party.id)
+        val text = backupManager.generateWhatsAppStatement(party, list, _language.value)
         val context = getApplication<Application>()
         try {
             val sendIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -148,7 +154,7 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(sendIntent)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, text)
@@ -161,20 +167,56 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    // Custom Category
-    fun addCustomCategory(nameSd: String, nameUr: String, nameEn: String, icon: String, color: String) {
-        repository.addCustomCategory(nameSd, nameUr, nameEn, icon, color)
+    // 2. Monthly House Expenditures (Fixed / Todo)
+    fun addMonthlyExpenditure(title: String, amount: Double, notes: String) {
+        repository.addMonthlyExpenditure(_currentMonthKey.value, title, amount, notes)
         refreshAll()
     }
 
-    fun deleteCategory(id: Long) {
-        repository.deleteCategory(id)
+    fun toggleMonthlyExpenditurePaid(id: Long, isPaid: Boolean) {
+        repository.toggleMonthlyExpenditurePaid(id, isPaid)
         refreshAll()
     }
 
-    // Ration Operations
-    fun addRationItem(nameSd: String, nameUr: String, nameEn: String, qty: Double, unit: String, estPrice: Double, notes: String) {
-        repository.addRationItem(_currentMonthKey.value, nameSd, nameUr, nameEn, qty, unit, estPrice, 0.0, false, notes)
+    fun deleteMonthlyExpenditure(id: Long) {
+        repository.deleteMonthlyExpenditure(id)
+        refreshAll()
+    }
+
+    // Copy previous month's expenditures into this month
+    fun copyPreviousMonthExpenditures() {
+        val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
+        try {
+            val date = sdf.parse(_currentMonthKey.value) ?: Date()
+            val cal = Calendar.getInstance().apply {
+                time = date
+                add(Calendar.MONTH, -1)
+            }
+            val prevMonthKey = sdf.format(cal.time)
+            val copied = repository.copyMonthlyExpendituresFromPreviousMonth(prevMonthKey, _currentMonthKey.value)
+            refreshAll()
+            if (copied > 0) {
+                Toast.makeText(getApplication(), I18n.t("copy_success", _language.value), Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(getApplication(), "گذريل مهيني ($prevMonthKey) ۾ ڪي به خرچ نه مليا", Toast.LENGTH_SHORT).show()
+            }
+        } catch (_: Exception) {}
+    }
+
+    // 3. Daily Expenses Log
+    fun addDailyExpense(title: String, amount: Double, paymentMethod: String, notes: String) {
+        repository.addDailyExpense(title, amount, paymentMethod, notes)
+        refreshAll()
+    }
+
+    fun deleteDailyExpense(id: Long) {
+        repository.deleteDailyExpense(id)
+        refreshAll()
+    }
+
+    // 4. Monthly Ration / Grocery Checklist
+    fun addRationItem(name: String, qty: Double, unit: String, estPrice: Double, notes: String) {
+        repository.addRationItem(_currentMonthKey.value, name, qty, unit, estPrice, notes)
         refreshAll()
     }
 
@@ -188,34 +230,15 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         refreshAll()
     }
 
-    fun addRationTotalToMonthlyExpenses() {
-        val items = _rationItems.value
-        val totalSpent = items.filter { it.isPurchased }.sumOf {
-            if (it.actualPrice > 0) it.actualPrice else it.estimatedPrice
-        }
-        if (totalSpent <= 0) {
-            Toast.makeText(getApplication(), "ڪو به راشن ورتل ناهي (No purchased items)", Toast.LENGTH_SHORT).show()
-            return
-        }
+    // 5. Custom Cards
+    fun addCustomCard(title: String, targetType: String, targetId: Long?, icon: String, color: String) {
+        repository.addCustomCard(title, targetType, targetId, icon, color)
+        refreshAll()
+    }
 
-        val noteText = when (_language.value) {
-            AppLanguage.SINDHI -> "ماهوار راشن ۽ سودا سلف خريداري جو ڪل بل"
-            AppLanguage.URDU -> "ماہانہ راشن اور سودا سلف خریداری کا کل بل"
-            AppLanguage.ENGLISH -> "Monthly Grocery & Ration Total Bill"
-        }
-
-        addTransaction(
-            partyId = null,
-            partyName = "",
-            categoryId = null,
-            categoryKey = "grocery",
-            type = "OUTFLOW",
-            amount = totalSpent,
-            paymentMethod = "Cash",
-            notes = noteText
-        )
-
-        Toast.makeText(getApplication(), I18n.t("ration_added_success", _language.value), Toast.LENGTH_LONG).show()
+    fun deleteCustomCard(id: Long) {
+        repository.deleteCustomCard(id)
+        refreshAll()
     }
 
     // Backup
@@ -224,7 +247,7 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
             val file = backupManager.exportToJson(_currentMonthKey.value)
             backupManager.shareBackup(file)
         } catch (e: Exception) {
-            Toast.makeText(getApplication(), "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(getApplication(), "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 }

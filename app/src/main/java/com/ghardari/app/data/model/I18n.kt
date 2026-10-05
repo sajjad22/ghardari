@@ -13,72 +13,70 @@ object I18n {
     private data class Trans(val sd: String, val ur: String, val en: String)
 
     private val strings = mapOf(
-        "app_title" to Trans("گهرڌاري", "گھرداری", "Ghardari"),
-        "app_subtitle" to Trans("گهرو خرچ، کاتو ۽ راشن لسٽ", "گھریلو اخراجات، کھاتہ اور راشن لسٹ", "Household Khata & Expenses"),
-        "tab_expenses" to Trans("مهيني جا خرچ", "ماہانہ اخراجات", "Monthly Expenses"),
-        "tab_khata" to Trans("اڌارو ۽ کاتو", "ادھار اور کھاتہ", "Khata & Lending"),
-        "tab_ration" to Trans("راشن لسٽ", "راشن لسٹ", "Grocery / Ration"),
-        "tab_reports" to Trans("رپورٽ ۽ بيڪ اپ", "رپورٹ اور بیک اپ", "Reports & Backup"),
+        "app_title" to Trans("گهرداري", "گھرداری", "Ghardari"),
+        "app_subtitle" to Trans("گهرو خرچ، اڌار کاتو ۽ راشن", "گھریلو اخراجات، ادھار کھاتہ اور راشن", "Household Expenses & Khata"),
 
-        // Monthly overview
-        "received_money" to Trans("ڪل آيل رقم", "کل وصولی", "Total Received"),
-        "total_spent" to Trans("ڪل خرچ", "کل خرچ", "Total Spent"),
-        "net_balance" to Trans("باقي بچت", "باقی رقم", "Remaining Balance"),
-        "owed_to_us" to Trans("وٺڻا آهن", "لینے ہیں", "Receivable"),
-        "we_owe" to Trans("ڏيڻا آهن", "دینے ہیں", "Payable"),
+        // Core 4 Cards
+        "card_khata" to Trans("اڌار کاتو", "ادھار کھاتہ", "Udhaar Khata"),
+        "card_khata_sub" to Trans("ڏيتي ليتي، اڌارو ۽ اڪائونٽ صاف", "لین دین، ادھار اور حساب بےباق", "Lending & Borrowing Ledger"),
 
-        // Quick Entry
-        "quick_add" to Trans("تڪڙو اندراج", "فوری اندراج", "Quick Add"),
-        "amount" to Trans("رقم (روپيا)", "رقم (روپے)", "Amount (Rs.)"),
-        "category" to Trans("شعبو / ڪيٽيگري", "شعبہ / کیٹیگری", "Category"),
-        "person" to Trans("ماڻهو / پارٽي", "شخص / پارٹی", "Person / Party"),
-        "notes" to Trans("تفصيل / نوٽ", "تفصیل / نوٹ", "Details / Note"),
-        "date" to Trans("تاريخ", "تاریخ", "Date"),
-        "payment_method" to Trans("طريقو", "ادائیگی طریقہ", "Payment Method"),
-        "save" to Trans("محفوظ ڪريو", "محفوظ کریں", "Save"),
-        "cancel" to Trans("رد ڪريو", "منسوخ", "Cancel"),
-        "delete" to Trans("ختم ڪريو", "حذف کریں", "Delete"),
-        "edit" to Trans("تبديل ڪريو", "ترمیم کریں", "Edit"),
+        "card_monthly" to Trans("مهيني جا خرچ", "ماہانہ اخراجات", "Monthly Expenditures"),
+        "card_monthly_sub" to Trans("بجلي، پاڻي، رڪشا ۽ اسڪول فيس", "بجلی، پانی، رکشہ اور اسکول فیس", "Fixed Monthly Bills & Fees"),
 
-        // Types
-        "inflow" to Trans("ورتا (آمدني)", "لیے (آمدنی)", "Money Received (Inflow)"),
-        "outflow" to Trans("ڏنا (خرچ)", "دیے (خرچ)", "Money Spent (Expense)"),
-        "khata_give" to Trans("کاتي ۾ ڏنا", "کھاتے میں دیے", "Lent / Paid to Party"),
-        "khata_receive" to Trans("کاتي ۾ ورتا", "کھاتے سے لیے", "Received from Party"),
+        "card_daily" to Trans("روزانو خرچ", "روزمرہ اخراجات", "Daily Expenses"),
+        "card_daily_sub" to Trans("ماني، سبزي، بوتل ۽ روز جا خرچ", "کھانا، سبزی، بوتل اور روز کا خرچ", "Daily Expenses Log"),
 
-        // Khata
+        "card_ration" to Trans("راشن لسٽ", "راشن لسٹ", "Monthly Ration"),
+        "card_ration_sub" to Trans("پورو مهينو سودا سلف جي فهرست", "پورے مہینے کا راشن و سودا سلف", "Monthly Grocery Checklist"),
+
+        "card_settings" to Trans("سيٽنگ ۽ بيڪ اپ", "سیٹنگ اور بیک اپ", "Settings & Backup"),
+        "card_settings_sub" to Trans("نوان ڪارڊ، ٻولي ۽ بيڪ اپ", "نئے کارڈز، زبان اور بیک اپ", "Custom Cards & Backup"),
+
+        // Monthly Expenditures Todo & Copy
+        "paid" to Trans("ادا ٿيل", "ادا شدہ", "Paid"),
+        "unpaid" to Trans("باقي رهيل", "غیر ادا شدہ", "Unpaid"),
+        "copy_previous_month" to Trans("گذريل مهيني مان نقل ڪريو", "پچھلے مہینے سے نقل کریں", "Copy from Previous Month"),
+        "copy_confirm_msg" to Trans("ڇا توهان گذريل مهيني جا خرچ هن مهيني ۾ آڻڻ چاهيو ٿا؟", "کیا آپ پچھلے مہینے کے اخراجات اس مہینے میں لانا چاہتے ہیں؟", "Do you want to copy all expenditures from last month?"),
+        "copy_success" to Trans("گذريل مهيني جا خرچ ڪاميابي سان هن مهيني ۾ شامل ٿي ويا!", "پچھلے مہینے کے اخراجات شامل ہو گئے!", "Copied previous month's expenditures successfully!"),
+        "add_monthly_item" to Trans("نئون ماهوار خرچ شامل ڪريو", "نیا ماہانہ خرچ شامل کریں", "Add Monthly Expenditure"),
+
+        // Khata Debit / Credit
+        "debit" to Trans("ڏنا (Debit)", "دیے (Debit)", "Debit (We Gave)"),
+        "credit" to Trans("ورتا (Credit)", "لیے (Credit)", "Credit (We Received)"),
         "cleared" to Trans("حساب صاف", "حساب بےباق", "Account Cleared"),
-        "uncleared" to Trans("باقي رهيل", "بقایا جات", "Pending"),
         "clear_account" to Trans("حساب صاف ڪريو", "حساب بےباق کریں", "Clear Account"),
         "add_person" to Trans("نئون ماڻهو شامل ڪريو", "نیا شخص شامل کریں", "Add Person"),
-        "person_name" to Trans("ماڻهوءَ جو نالو (مثال: مس XYZ)", "نام (مثلاً: مس XYZ)", "Person Name (e.g. Miss XYZ)"),
-        "phone" to Trans("فون نمبر (اختياري)", "فون نمبر (اختیاری)", "Phone Number (Optional)"),
-        "we_owe_them" to Trans("اسان کي ڏيڻا آهن (درزي، ملازم)", "ہم نے دینے ہیں (درزی، وغیرہ)", "We owe them (Tailor, Vendor)"),
-        "they_owe_us" to Trans("هنن کي واپس ڏيڻا آهن (اڌارو ڏنو)", "انہوں نے واپس کرنے ہیں (ادھار دیا)", "They owe us (Loan given)"),
-        "share_whatsapp" to Trans("واٽس ايپ تي رسيد موڪليو", "واٹس ایپ پر شیئر کریں", "Share via WhatsApp"),
+        "person_name" to Trans("ماڻهوءَ جو نالو", "شخص کا نام", "Person Name"),
+        "we_owe" to Trans("اسان کي ڏيڻا آهن", "ہم نے دینے ہیں", "We Owe"),
+        "owed_to_us" to Trans("هنن کي واپس ڏيڻا آهن", "انہوں نے دینے ہیں", "They Owe Us"),
+        "share_whatsapp" to Trans("واٽس ايپ تي موڪليو", "واٹس ایپ پر شیئر کریں", "Share via WhatsApp"),
+
+        // Daily
+        "add_daily_expense" to Trans("روزانو خرچ شامل ڪريو", "روزمرہ خرچ شامل کریں", "Add Daily Expense"),
+        "expense_title" to Trans("خرچ جو عنوان", "خرچ کا عنوان", "Expense Title"),
 
         // Ration
-        "ration_title" to Trans("ماهوار راشن ۽ خريداري لسٽ", "ماہانہ راشن اور خریداری لسٹ", "Monthly Grocery & Ration List"),
-        "add_item" to Trans("راشن ۾ شيءِ شامل ڪريو", "راشن آئٹم شامل کریں", "Add Ration Item"),
-        "item_name" to Trans("شيءِ جو نالو (مثال: کنڊ، اٽو)", "چیز کا نام (مثلاً: چینی، آٹا)", "Item Name (e.g. Sugar, Flour)"),
-        "quantity" to Trans("ڪٿ / مقدار", "مقدار", "Quantity"),
-        "unit" to Trans("ماپ / اڪائي", "پیمائش کی اکائی", "Unit"),
+        "add_ration_item" to Trans("راشن شيءِ شامل ڪريو", "راشن آئٹم شامل کریں", "Add Ration Item"),
+        "item_name" to Trans("شيءِ جو نالو", "آئٹم کا نام", "Item Name"),
+        "quantity" to Trans("مقدار", "مقدار", "Quantity"),
+        "unit" to Trans("ماپ / اڪائي", "پیمائش", "Unit"),
         "est_price" to Trans("اندازن قيمت", "تخمینہ قیمت", "Est. Price"),
         "act_price" to Trans("اصلي خرچ", "اصل خرچ", "Actual Price"),
         "bought" to Trans("ورتو", "خریدا", "Bought"),
         "to_buy" to Trans("وٺڻو آهي", "خریدنا ہے", "To Buy"),
-        "add_to_monthly_expenses" to Trans("راشن خرچ مهيني جي کاتي ۾ شامل ڪريو", "راشن کا کل خرچ ماہانہ کھاتے میں شامل کریں", "Add Grocery Total to Monthly Expenses"),
-        "ration_added_success" to Trans("راشن جو ڪل خرچ مهيني جي خرچن ۾ شامل ٿي ويو!", "راشن کا کل خرچ ماہانہ اخراجات میں شامل ہو گیا!", "Grocery total added to monthly expenses!"),
 
-        // Categories
-        "add_category" to Trans("نئين ڪيٽيگري شامل ڪريو", "نئی کیٹیگری شامل کریں", "Add New Category"),
-        "category_name" to Trans("ڪيٽيگريءَ جو نالو", "کیٹیگری کا نام", "Category Name"),
-        "pick_icon" to Trans("نشان (آئڪن) چونڊيو", "نشان منتخب کریں", "Select Icon"),
+        // Custom Cards
+        "add_custom_card" to Trans("نئون اسڪرين ڪارڊ شامل ڪريو", "نیا اسکرین کارڈ شامل کریں", "Add Custom Card"),
+        "card_title" to Trans("ڪارڊ جو عنوان", "کارڈ کا عنوان", "Card Title"),
 
-        // Backup
-        "export_backup" to Trans("ڊيٽا جو بيڪ اپ وٺو (JSON)", "ڈیٹا کا بیک اپ لیں (JSON)", "Export Backup (JSON)"),
-        "import_backup" to Trans("بيڪ اپ مان بحال ڪريو", "بیک اپ سے بحال کریں", "Restore from Backup"),
-        "backup_success" to Trans("بيڪ اپ فائل ڪاميابي سان تيار ٿي وئي!", "بیک اپ فائل تیار ہو گئی!", "Backup created successfully!"),
+        // Common
+        "amount" to Trans("رقم (روپيا)", "رقم (روپے)", "Amount (Rs.)"),
+        "notes" to Trans("تفصيل / نوٽ", "تفصیل / نوٹ", "Details / Note"),
+        "save" to Trans("محفوظ ڪريو", "محفوظ کریں", "Save"),
+        "cancel" to Trans("رد ڪريو", "منسوخ", "Cancel"),
+        "delete" to Trans("ختم ڪريو", "حذف کریں", "Delete"),
+        "back" to Trans("واپس", "واپس", "Back"),
+        "export_backup" to Trans("ڊيٽا بيڪ اپ وٺو (JSON)", "ڈیٹا کا بیک اپ لیں (JSON)", "Export Backup (JSON)"),
         "no_data" to Trans("في الحال ڪوبه رڪارڊ ناهي", "فی الحال کوئی ریکارڈ موجود نہیں", "No records found")
     )
 }

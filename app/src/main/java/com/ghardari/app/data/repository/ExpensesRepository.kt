@@ -5,84 +5,55 @@ import com.ghardari.app.data.model.*
 
 class ExpensesRepository(private val dbHelper: DatabaseHelper) {
 
-    fun getCategories(): List<CategoryRecord> = dbHelper.getAllCategories()
-
-    fun addCustomCategory(nameSd: String, nameUr: String, nameEn: String, icon: String, color: String): Long {
-        return dbHelper.addCustomCategory(nameSd, nameUr, nameEn, icon, color)
-    }
-
-    fun deleteCategory(id: Long) = dbHelper.deleteCategory(id)
-
+    // 1. Udhar Khata
     fun getParties(): List<PartyRecord> = dbHelper.getAllParties()
-
-    fun addParty(name: String, phone: String, type: String, initialBalance: Double, notes: String): Long {
-        return dbHelper.addParty(name, phone, type, initialBalance, notes)
-    }
-
-    fun clearPartyAccount(partyId: Long, partyName: String) {
+    fun addParty(name: String, phone: String, type: String, initialBalance: Double, notes: String): Long =
+        dbHelper.addParty(name, phone, type, initialBalance, notes)
+    fun addKhataTransaction(partyId: Long, partyName: String, type: String, amount: Double, notes: String): Long =
+        dbHelper.addKhataTransaction(partyId, partyName, type, amount, notes)
+    fun clearPartyAccount(partyId: Long, partyName: String) =
         dbHelper.clearPartyAccount(partyId, partyName)
-    }
+    fun deleteParty(partyId: Long) = dbHelper.deleteParty(partyId)
+    fun getPartyTransactions(partyId: Long): List<KhataTransaction> =
+        dbHelper.getPartyTransactions(partyId)
 
-    fun addTransaction(
-        partyId: Long?,
-        partyName: String,
-        categoryId: Long?,
-        categoryKey: String,
-        type: String,
-        amount: Double,
-        date: String,
-        monthKey: String,
-        paymentMethod: String,
-        status: String = "CLEARED",
-        notes: String
-    ): Long {
-        return dbHelper.addTransaction(
-            partyId = partyId,
-            partyName = partyName,
-            categoryId = categoryId,
-            categoryKey = categoryKey,
-            type = type,
-            amount = amount,
-            date = date,
-            monthKey = monthKey,
-            paymentMethod = paymentMethod,
-            status = status,
-            notes = notes
-        )
-    }
+    // 2. Monthly House Expenditures (Fixed / Todo)
+    fun getMonthlyExpenditures(monthKey: String): List<MonthlyExpenditure> =
+        dbHelper.getMonthlyExpenditures(monthKey)
+    fun addMonthlyExpenditure(monthKey: String, title: String, amount: Double, notes: String): Long =
+        dbHelper.addMonthlyExpenditure(monthKey, title, amount, notes)
+    fun toggleMonthlyExpenditurePaid(id: Long, isPaid: Boolean) =
+        dbHelper.toggleMonthlyExpenditurePaid(id, isPaid)
+    fun deleteMonthlyExpenditure(id: Long) =
+        dbHelper.deleteMonthlyExpenditure(id)
+    fun copyMonthlyExpendituresFromPreviousMonth(fromMonthKey: String, toMonthKey: String): Int =
+        dbHelper.copyMonthlyExpendituresFromPreviousMonth(fromMonthKey, toMonthKey)
 
-    fun getTransactionsByMonth(monthKey: String): List<TransactionRecord> {
-        return dbHelper.getTransactionsByMonth(monthKey)
-    }
+    // 3. Daily Expenses Log
+    fun getDailyExpenses(monthKey: String): List<DailyExpense> =
+        dbHelper.getDailyExpenses(monthKey)
+    fun addDailyExpense(title: String, amount: Double, paymentMethod: String, notes: String): Long =
+        dbHelper.addDailyExpense(title, amount, paymentMethod, notes)
+    fun deleteDailyExpense(id: Long) =
+        dbHelper.deleteDailyExpense(id)
 
-    fun getTransactionsByParty(partyId: Long): List<TransactionRecord> {
-        return dbHelper.getTransactionsByParty(partyId)
-    }
-
-    fun deleteTransaction(id: Long) = dbHelper.deleteTransaction(id)
-
-    fun getMonthSummary(monthKey: String): MonthSummary = dbHelper.getMonthSummary(monthKey)
-
-    fun getRationItems(monthKey: String): List<RationItem> = dbHelper.getRationItems(monthKey)
-
-    fun addRationItem(
-        monthKey: String,
-        nameSd: String,
-        nameUr: String,
-        nameEn: String,
-        quantity: Double,
-        unit: String,
-        estPrice: Double,
-        actualPrice: Double,
-        isPurchased: Boolean,
-        notes: String
-    ): Long {
-        return dbHelper.addRationItem(monthKey, nameSd, nameUr, nameEn, quantity, unit, estPrice, actualPrice, isPurchased, notes)
-    }
-
-    fun updateRationPurchased(id: Long, isPurchased: Boolean, actualPrice: Double) {
+    // 4. Monthly Ration / Grocery Checklist
+    fun getRationItems(monthKey: String): List<RationItem> =
+        dbHelper.getRationItems(monthKey)
+    fun addRationItem(monthKey: String, name: String, qty: Double, unit: String, estPrice: Double, notes: String): Long =
+        dbHelper.addRationItem(monthKey, name, qty, unit, estPrice, notes)
+    fun updateRationPurchased(id: Long, isPurchased: Boolean, actualPrice: Double) =
         dbHelper.updateRationPurchased(id, isPurchased, actualPrice)
-    }
+    fun deleteRationItem(id: Long) =
+        dbHelper.deleteRationItem(id)
 
-    fun deleteRationItem(id: Long) = dbHelper.deleteRationItem(id)
+    // 5. Custom Cards
+    fun getCustomCards(): List<CustomCard> = dbHelper.getCustomCards()
+    fun addCustomCard(title: String, targetType: String, targetId: Long?, icon: String, color: String): Long =
+        dbHelper.addCustomCard(title, targetType, targetId, icon, color)
+    fun deleteCustomCard(id: Long) = dbHelper.deleteCustomCard(id)
+
+    // Dashboard Summary
+    fun getDashboardSummary(monthKey: String): DashboardSummary =
+        dbHelper.getDashboardSummary(monthKey)
 }

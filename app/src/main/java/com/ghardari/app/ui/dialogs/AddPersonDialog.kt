@@ -28,7 +28,7 @@ fun AddPersonDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("LENDER") } // LENDER (we owe them / Miss XYZ) or BORROWER (they owe us)
+    var type by remember { mutableStateOf("LENDER") } // LENDER (we owe them) or BORROWER (they owe us)
     var balanceText by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
@@ -62,7 +62,7 @@ fun AddPersonDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text(I18n.t("phone", language)) },
+                    label = { Text("فون نمبر (Phone)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -89,7 +89,7 @@ fun AddPersonDialog(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(vertical = 6.dp)
                     ) {
-                        Text(I18n.t("we_owe_them", language), fontSize = 11.sp)
+                        Text(I18n.t("we_owe", language), fontSize = 12.sp)
                     }
 
                     Button(
@@ -102,7 +102,7 @@ fun AddPersonDialog(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(vertical = 6.dp)
                     ) {
-                        Text(I18n.t("they_owe_us", language), fontSize = 11.sp)
+                        Text(I18n.t("owed_to_us", language), fontSize = 12.sp)
                     }
                 }
 
@@ -111,7 +111,7 @@ fun AddPersonDialog(
                 OutlinedTextField(
                     value = balanceText,
                     onValueChange = { if (it.all { ch -> ch.isDigit() || ch == '.' }) balanceText = it },
-                    label = { Text(I18n.t("amount", language) + " (Initial Balance)") },
+                    label = { Text(I18n.t("amount", language)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,

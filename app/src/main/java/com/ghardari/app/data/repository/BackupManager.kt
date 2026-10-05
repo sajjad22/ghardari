@@ -14,24 +14,26 @@ import java.util.Locale
 class BackupManager(private val context: Context, private val repository: ExpensesRepository) {
 
     data class BackupData(
-        val appVersion: String = "1.0.0",
+        val appVersion: String = "2.0.0",
         val exportedAt: String,
-        val categories: List<CategoryRecord>,
-        val parties: List<PartyRecord>,
         val currentMonthKey: String,
-        val transactions: List<TransactionRecord>,
-        val rationItems: List<RationItem>
+        val parties: List<PartyRecord>,
+        val monthlyExpenditures: List<MonthlyExpenditure>,
+        val dailyExpenses: List<DailyExpense>,
+        val rationItems: List<RationItem>,
+        val customCards: List<CustomCard>
     )
 
     fun exportToJson(currentMonthKey: String): File {
         val now = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(Date())
         val data = BackupData(
             exportedAt = now,
-            categories = repository.getCategories(),
-            parties = repository.getParties(),
             currentMonthKey = currentMonthKey,
-            transactions = repository.getTransactionsByMonth(currentMonthKey),
-            rationItems = repository.getRationItems(currentMonthKey)
+            parties = repository.getParties(),
+            monthlyExpenditures = repository.getMonthlyExpenditures(currentMonthKey),
+            dailyExpenses = repository.getDailyExpenses(currentMonthKey),
+            rationItems = repository.getRationItems(currentMonthKey),
+            customCards = repository.getCustomCards()
         )
 
         val gson: Gson = GsonBuilder().setPrettyPrinting().create()
@@ -64,14 +66,14 @@ class BackupManager(private val context: Context, private val repository: Expens
         context.startActivity(chooser)
     }
 
-    fun generateWhatsAppStatement(party: PartyRecord, transactions: List<TransactionRecord>, lang: AppLanguage): String {
+    fun generateWhatsAppStatement(party: PartyRecord, transactions: List<KhataTransaction>, lang: AppLanguage): String {
         val sb = StringBuilder()
         val isSd = lang == AppLanguage.SINDHI
         val isUr = lang == AppLanguage.URDU
 
         if (isSd) {
-            sb.append("📋 *گهرڌاري - کاتي جي تفصيل*\n")
-            sb.append("👤 پارٽي/ماڻهو: *${party.name}*\n")
+            sb.append("📋 *گهرداري - کاتي جي تفصيل*\n")
+            sb.append("👤 ماڻهو: *${party.name}*\n")
             sb.append("----------------------------\n")
             if (party.currentBalance == 0.0) {
                 sb.append("✅ *حساب صاف ٿيل آهي (Cleared)*\n")
@@ -83,7 +85,7 @@ class BackupManager(private val context: Context, private val repository: Expens
             sb.append("----------------------------\n")
             sb.append("تازا اندراج:\n")
             transactions.take(5).forEach {
-                val sign = if (it.type == "KHATA_GIVE") "(-) ڏنا" else if (it.type == "KHATA_RECEIVE") "(+) ورتا" else "صاف"
+                val sign = if (it.type == "DEBIT") "(-) ڏنا" else if (it.type == "CREDIT") "(+) ورتا" else "صاف"
                 sb.append("• ${it.date}: Rs. ${it.amount.toInt()} ($sign) ${it.notes}\n")
             }
         } else if (isUr) {
@@ -100,7 +102,7 @@ class BackupManager(private val context: Context, private val repository: Expens
             sb.append("----------------------------\n")
             sb.append("حالیہ لین دین:\n")
             transactions.take(5).forEach {
-                val sign = if (it.type == "KHATA_GIVE") "(-) دیے" else if (it.type == "KHATA_RECEIVE") "(+) لیے" else "بےباق"
+                val sign = if (it.type == "DEBIT") "(-) دیے" else if (it.type == "CREDIT") "(+) لیے" else "بےباق"
                 sb.append("• ${it.date}: Rs. ${it.amount.toInt()} ($sign) ${it.notes}\n")
             }
         } else {
