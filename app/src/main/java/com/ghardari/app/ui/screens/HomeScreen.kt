@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -27,7 +26,6 @@ import com.ghardari.app.ui.theme.*
 fun HomeScreen(
     language: AppLanguage,
     summary: DashboardSummary,
-    customCards: List<CustomCard>,
     onCardClick: (String) -> Unit
 ) {
     LazyVerticalGrid(
@@ -93,6 +91,27 @@ fun HomeScreen(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
+                                    text = "ڪل خرچ (Grand Total)",
+                                    fontSize = 11.sp,
+                                    color = EmeraldLight
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Rs. ${summary.grandTotalExpense.toInt()}",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White.copy(alpha = 0.12f),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
                                     text = I18n.t("card_monthly", language),
                                     fontSize = 11.sp,
                                     color = EmeraldLight
@@ -100,7 +119,7 @@ fun HomeScreen(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Rs. ${summary.monthlyBillsTotal.toInt()}",
-                                    fontSize = 16.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
@@ -112,27 +131,6 @@ fun HomeScreen(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
-                            }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = Color.White.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = I18n.t("card_daily", language),
-                                    fontSize = 11.sp,
-                                    color = EmeraldLight
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Rs. ${summary.dailyExpensesTotal.toInt()}",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
                             }
                         }
                     }
@@ -148,7 +146,7 @@ fun HomeScreen(
                 badgeText = if (summary.khataWeOwe > 0) "ڏيڻا: ${summary.khataWeOwe.toInt()}" else if (summary.khataOwedToUs > 0) "وٺڻا: ${summary.khataOwedToUs.toInt()}" else "صاف",
                 badgeColor = if (summary.khataWeOwe > 0) OutflowRed else InflowGreen,
                 icon = Icons.Default.AccountBalanceWallet,
-                cardColor = Color(0xFFF0FDF4), // Light green tint
+                cardColor = Color(0xFFF0FDF4),
                 iconTint = InflowGreen,
                 onClick = { onCardClick("KHATA") }
             )
@@ -162,7 +160,7 @@ fun HomeScreen(
                 badgeText = if (summary.monthlyBillsPendingCount > 0) "${summary.monthlyBillsPendingCount} " + I18n.t("unpaid", language) else "سڀ ادا",
                 badgeColor = if (summary.monthlyBillsPendingCount > 0) OutflowRed else InflowGreen,
                 icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                cardColor = Color(0xFFEFF6FF), // Light blue tint
+                cardColor = Color(0xFFEFF6FF),
                 iconTint = Color(0xFF2563EB),
                 onClick = { onCardClick("MONTHLY") }
             )
@@ -173,10 +171,10 @@ fun HomeScreen(
             MainDashboardCard(
                 title = I18n.t("card_daily", language),
                 subtitle = I18n.t("card_daily_sub", language),
-                badgeText = "ڪل: Rs. ${summary.dailyExpensesTotal.toInt()}",
+                badgeText = "Rs. ${summary.dailyExpensesTotal.toInt()}",
                 badgeColor = AmberAccent,
                 icon = Icons.Default.Today,
-                cardColor = Color(0xFFFFFBEB), // Light amber tint
+                cardColor = Color(0xFFFFFBEB),
                 iconTint = AmberAccent,
                 onClick = { onCardClick("DAILY") }
             )
@@ -190,27 +188,41 @@ fun HomeScreen(
                 badgeText = "${summary.rationBoughtCount}/${summary.rationTotalCount} " + I18n.t("bought", language),
                 badgeColor = PurpleAccent,
                 icon = Icons.Default.ShoppingCart,
-                cardColor = Color(0xFFFAF5FF), // Light purple tint
+                cardColor = Color(0xFFFAF5FF),
                 iconTint = PurpleAccent,
                 onClick = { onCardClick("RATION") }
             )
         }
 
-        // User Custom Cards
-        items(customCards, key = { it.id }) { card ->
+        // Card 5: Financial Reports (مالي رپورٽون)
+        item {
             MainDashboardCard(
-                title = card.title,
-                subtitle = "ڪسٽم اسڪرين",
-                badgeText = "شامل ڪيل",
-                badgeColor = Color(android.graphics.Color.parseColor(card.color)),
-                icon = Icons.Default.Star,
-                cardColor = Color.White,
-                iconTint = Color(android.graphics.Color.parseColor(card.color)),
-                onClick = { onCardClick("KHATA") }
+                title = I18n.t("card_reports", language),
+                subtitle = I18n.t("card_reports_sub", language),
+                badgeText = "خلاصو",
+                badgeColor = EmeraldDark,
+                icon = Icons.Default.Assessment,
+                cardColor = Color(0xFFF0FDFA),
+                iconTint = EmeraldPrimary,
+                onClick = { onCardClick("REPORTS") }
             )
         }
 
-        // Card 5: Settings & Backup (سيٽنگ ۽ بيڪ اپ)
+        // Card 6: History & Archive (تاريخ ۽ آرڪائيو)
+        item {
+            MainDashboardCard(
+                title = I18n.t("card_history", language),
+                subtitle = I18n.t("card_history_sub", language),
+                badgeText = "آرڪائيو",
+                badgeColor = SlateDark,
+                icon = Icons.Default.History,
+                cardColor = Color(0xFFF8FAFC),
+                iconTint = SlateDark,
+                onClick = { onCardClick("HISTORY") }
+            )
+        }
+
+        // Card 7: Settings & Backup (سيٽنگ ۽ بيڪ اپ)
         item(span = { GridItemSpan(2) }) {
             Card(
                 shape = RoundedCornerShape(18.dp),
@@ -317,7 +329,7 @@ fun MainDashboardCard(
             Column {
                 Text(
                     text = title,
-                    fontSize = 17.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = SlateDark
                 )

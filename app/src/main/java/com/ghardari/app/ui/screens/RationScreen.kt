@@ -1,5 +1,6 @@
 package com.ghardari.app.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,11 +11,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
@@ -33,10 +37,13 @@ fun RationScreen(
     monthKey: String,
     items: List<RationItem>,
     onBackClick: () -> Unit,
-    onAddItem: (name: String, qty: Double, unit: String, estPrice: Double, notes: String) -> Unit,
+    onAddItem: (name: String, company: String, qty: Double, unit: String, estPrice: Double, notes: String) -> Unit,
     onTogglePurchased: (id: Long, isPurchased: Boolean, actualPrice: Double) -> Unit,
-    onDeleteItem: (id: Long) -> Unit
+    onDeleteItem: (id: Long) -> Unit,
+    onPrintList: (Context) -> Unit,
+    onShareList: (Context) -> Unit
 ) {
+    val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
     var priceDialogItem by remember { mutableStateOf<RationItem?>(null) }
     var enteredPriceText by remember { mutableStateOf("") }
@@ -59,6 +66,14 @@ fun RationScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onPrintList(context) }) {
+                        Icon(Icons.Default.Print, contentDescription = "Print List", tint = Color.White)
+                    }
+                    IconButton(onClick = { onShareList(context) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share List", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = EmeraldDark)
@@ -89,34 +104,63 @@ fun RationScreen(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(text = "ڪل خرچ ٿيل رقم", fontSize = 12.sp, color = SlateMuted)
-                            Text(
-                                text = "Rs. ${totalBoughtCost.toInt()}",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = PurpleAccent
-                            )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(text = "ڪل خرچ ٿيل رقم", fontSize = 12.sp, color = SlateMuted)
+                                Text(
+                                    text = "Rs. ${totalBoughtCost.toInt()}",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PurpleAccent
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = PurpleAccent.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "$boughtCount / $totalCount " + I18n.t("bought", language),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PurpleAccent,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = PurpleAccent.copy(alpha = 0.15f)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Print & Share Buttons for Shopkeeper
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "$boughtCount / $totalCount " + I18n.t("bought", language),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = PurpleAccent,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
+                            Button(
+                                onClick = { onPrintList(context) },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("پرنٽ PDF", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = { onShareList(context) },
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("واٽس ايپ لسٽ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PurpleAccent)
+                            }
                         }
                     }
                 }
@@ -162,8 +206,9 @@ fun RationScreen(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Column {
+                                val brandDisplay = if (item.company.isNotBlank()) " (${item.company})" else ""
                                 Text(
-                                    text = item.name,
+                                    text = "${item.name}$brandDisplay",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDone) SlateMuted else SlateDark,
@@ -208,9 +253,10 @@ fun RationScreen(
         }
     }
 
-    // Add Ration Item Dialog (NO alte / placeholder text!)
+    // Add Ration Item Dialog (with Company/Brand, NO alte/placeholder text)
     if (showAddDialog) {
         var nameText by remember { mutableStateOf("") }
+        var companyText by remember { mutableStateOf("") }
         var qtyText by remember { mutableStateOf("1") }
         var selectedUnit by remember { mutableStateOf("kg") }
         var estPriceText by remember { mutableStateOf("") }
@@ -243,7 +289,18 @@ fun RationScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = companyText,
+                        onValueChange = { companyText = it },
+                        label = { Text(I18n.t("company_brand", language)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -270,10 +327,10 @@ fun RationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(text = I18n.t("unit", language), fontSize = 12.sp, color = SlateMuted)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -301,7 +358,7 @@ fun RationScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = notesText,
@@ -312,7 +369,7 @@ fun RationScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -331,7 +388,7 @@ fun RationScreen(
                                 val qty = qtyText.toDoubleOrNull() ?: 1.0
                                 val est = estPriceText.toDoubleOrNull() ?: 0.0
                                 if (nameText.isNotBlank()) {
-                                    onAddItem(nameText.trim(), qty, selectedUnit, est, notesText.trim())
+                                    onAddItem(nameText.trim(), companyText.trim(), qty, selectedUnit, est, notesText.trim())
                                     showAddDialog = false
                                 }
                             },
@@ -348,7 +405,7 @@ fun RationScreen(
         }
     }
 
-    // Actual Price Dialog when purchased (NO alte / placeholder text!)
+    // Actual Price Dialog when purchased
     if (priceDialogItem != null) {
         val target = priceDialogItem!!
         Dialog(onDismissRequest = { priceDialogItem = null }) {
@@ -359,7 +416,7 @@ fun RationScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = target.name,
+                        text = target.name + (if (target.company.isNotBlank()) " (${target.company})" else ""),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = PurpleAccent

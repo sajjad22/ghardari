@@ -3,26 +3,22 @@ package com.ghardari.app.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.ghardari.app.data.model.AppLanguage
-import com.ghardari.app.data.model.CustomCard
 import com.ghardari.app.data.model.I18n
 import com.ghardari.app.ui.theme.*
 
@@ -30,15 +26,11 @@ import com.ghardari.app.ui.theme.*
 @Composable
 fun SettingsScreen(
     language: AppLanguage,
-    customCards: List<CustomCard>,
     onBackClick: () -> Unit,
     onLanguageChange: (AppLanguage) -> Unit,
-    onAddCustomCard: (title: String, targetType: String, targetId: Long?, icon: String, color: String) -> Unit,
-    onDeleteCustomCard: (id: Long) -> Unit,
-    onExportBackupClick: () -> Unit
+    onExportBackupClick: () -> Unit,
+    onRestoreBackupClick: () -> Unit
 ) {
-    var showAddCardDialog by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -57,7 +49,8 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 14.dp, bottom = 32.dp)
+            contentPadding = PaddingValues(top = 14.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Language Selection Card
             item {
@@ -100,67 +93,6 @@ fun SettingsScreen(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Custom Cards Section Header
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "مکيه صفحي جا نوان ڪارڊ (Custom Cards)",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SlateDark
-                    )
-
-                    Button(
-                        onClick = { showAddCardDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(I18n.t("add_custom_card", language), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Custom Cards List
-            if (customCards.isEmpty()) {
-                item {
-                    Text(text = "اڃا ڪو به نئون ڪارڊ شامل نه ڪيو ويو آهي.", fontSize = 12.sp, color = SlateMuted)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            } else {
-                items(customCards, key = { it.id }) { card ->
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = card.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SlateDark)
-                            IconButton(onClick = { onDeleteCustomCard(card.id) }, modifier = Modifier.size(28.dp)) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.LightGray)
-                            }
-                        }
-                    }
-                }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
             // Backup & Export Section
@@ -177,10 +109,10 @@ fun SettingsScreen(
                             Text(text = I18n.t("export_backup", language), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SlateDark)
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "پنهنجي سموري ڊيٽا جو JSON بيڪ اپ وٺو ۽ واٽس ايپ يا گوگل ڊرائيو تي شيئر ڪريو.",
+                            text = "پنهنجي سموري ڊيٽا جو محفوظ JSON فائيل ٺاهيو ۽ واٽس ايپ، اي ميل يا گوگل ڊرائيو تي محفوظ ڪريو.",
                             fontSize = 12.sp,
                             color = SlateMuted
                         )
@@ -200,51 +132,39 @@ fun SettingsScreen(
                     }
                 }
             }
-        }
-    }
 
-    // Add Custom Card Dialog (NO alte / placeholder text!)
-    if (showAddCardDialog) {
-        var titleText by remember { mutableStateOf("") }
-        Dialog(onDismissRequest = { showAddCardDialog = false }) {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(text = I18n.t("add_custom_card", language), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = EmeraldDark)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = titleText,
-                        onValueChange = { titleText = it },
-                        label = { Text(I18n.t("card_title", language)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(onClick = { showAddCardDialog = false }, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f)) {
-                            Text(I18n.t("cancel", language))
+            // Restore from Backup Section
+            item {
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.UploadFile, contentDescription = null, tint = EmeraldPrimary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = I18n.t("restore_backup", language), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SlateDark)
                         }
-                        Button(
-                            onClick = {
-                                if (titleText.isNotBlank()) {
-                                    onAddCustomCard(titleText.trim(), "KHATA", null, "Star", "#0F766E")
-                                    showAddCardDialog = false
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1.2f),
-                            enabled = titleText.isNotBlank()
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "پنهنجي اڳ محفوظ ڪيل JSON بيڪ اپ فائيل مان سمورو کاتو، خرچ ۽ راشن لسٽ بحال ڪريو.",
+                            fontSize = 12.sp,
+                            color = SlateMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        OutlinedButton(
+                            onClick = onRestoreBackupClick,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(I18n.t("save", language), fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldPrimary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(I18n.t("restore_backup", language), fontWeight = FontWeight.Bold, color = EmeraldDark)
                         }
                     }
                 }

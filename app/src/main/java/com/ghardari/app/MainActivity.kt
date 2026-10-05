@@ -1,14 +1,16 @@
 package com.ghardari.app
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +40,23 @@ class MainActivity : ComponentActivity() {
             val monthlyExpenditures by viewModel.monthlyExpenditures.collectAsState()
             val dailyExpenses by viewModel.dailyExpenses.collectAsState()
             val rationItems by viewModel.rationItems.collectAsState()
-            val customCards by viewModel.customCards.collectAsState()
+
+            // History / Archive States
+            val recordedMonths by viewModel.recordedMonths.collectAsState()
+            val historySelectedMonth by viewModel.historySelectedMonth.collectAsState()
+            val historyMonthlyExpenditures by viewModel.historyMonthlyExpenditures.collectAsState()
+            val historyDailyExpenses by viewModel.historyDailyExpenses.collectAsState()
+            val historyRationItems by viewModel.historyRationItems.collectAsState()
+            val historySummary by viewModel.historySummary.collectAsState()
+
+            // File picker launcher for Backup Restore
+            val restoreFileLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    viewModel.restoreBackup(uri)
+                }
+            }
 
             // Dynamic RTL layout direction based on language
             val layoutDirection = if (language.isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
@@ -63,7 +81,6 @@ class MainActivity : ComponentActivity() {
                             "HOME" -> HomeScreen(
                                 language = language,
                                 summary = summary,
-                                customCards = customCards,
                                 onCardClick = { screenTag -> viewModel.navigateTo(screenTag) }
                             )
 
@@ -113,6 +130,9 @@ class MainActivity : ComponentActivity() {
                                 onAddExpenditure = { title, amount, notes ->
                                     viewModel.addMonthlyExpenditure(title, amount, notes)
                                 },
+                                onUpdateExpenditure = { id, title, amount, notes ->
+                                    viewModel.updateMonthlyExpenditure(id, title, amount, notes)
+                                },
                                 onDeleteExpenditure = { id ->
                                     viewModel.deleteMonthlyExpenditure(id)
                                 },
@@ -139,27 +159,49 @@ class MainActivity : ComponentActivity() {
                                 monthKey = currentMonthKey,
                                 items = rationItems,
                                 onBackClick = { viewModel.navigateTo("HOME") },
-                                onAddItem = { name, qty, unit, estPrice, notes ->
-                                    viewModel.addRationItem(name, qty, unit, estPrice, notes)
+                                onAddItem = { name, company, qty, unit, estPrice, notes ->
+                                    viewModel.addRationItem(name, company, qty, unit, estPrice, notes)
                                 },
                                 onTogglePurchased = { id, isPurchased, actualPrice ->
                                     viewModel.toggleRationPurchased(id, isPurchased, actualPrice)
                                 },
                                 onDeleteItem = { id ->
                                     viewModel.deleteRationItem(id)
+                                },
+                                onPrintList = { ctx ->
+                                    viewModel.printShopkeeperList(ctx)
+                                },
+                                onShareList = { ctx ->
+                                    viewModel.shareShopkeeperList(ctx)
                                 }
+                            )
+
+                            "REPORTS" -> ReportsScreen(
+                                language = language,
+                                summary = summary,
+                                onBackClick = { viewModel.navigateTo("HOME") }
+                            )
+
+                            "HISTORY" -> ArchiveScreen(
+                                language = language,
+                                recordedMonths = recordedMonths,
+                                selectedMonth = historySelectedMonth,
+                                summary = historySummary,
+                                monthlyExpenditures = historyMonthlyExpenditures,
+                                dailyExpenses = historyDailyExpenses,
+                                rationItems = historyRationItems,
+                                onSelectMonth = { m -> viewModel.selectHistoryMonth(m) },
+                                onBackClick = { viewModel.navigateTo("HOME") }
                             )
 
                             "SETTINGS" -> SettingsScreen(
                                 language = language,
-                                customCards = customCards,
                                 onBackClick = { viewModel.navigateTo("HOME") },
                                 onLanguageChange = { lang -> viewModel.setLanguage(lang) },
-                                onAddCustomCard = { title, targetType, targetId, icon, color ->
-                                    viewModel.addCustomCard(title, targetType, targetId, icon, color)
-                                },
-                                onDeleteCustomCard = { id -> viewModel.deleteCustomCard(id) },
-                                onExportBackupClick = { viewModel.exportBackup() }
+                                onExportBackupClick = { viewModel.exportBackup() },
+                                onRestoreBackupClick = {
+                                    restoreFileLauncher.launch("application/json")
+                                }
                             )
                         }
                     }

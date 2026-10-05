@@ -11,6 +11,7 @@ import com.ghardari.app.data.db.DatabaseHelper
 import com.ghardari.app.data.model.*
 import com.ghardari.app.data.repository.BackupManager
 import com.ghardari.app.data.repository.ExpensesRepository
+import com.ghardari.app.data.repository.PrintReportHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +34,7 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     )
     val currentMonthKey: StateFlow<String> = _currentMonthKey.asStateFlow()
 
-    // Screen navigation: "HOME", "KHATA", "MONTHLY", "DAILY", "RATION", "SETTINGS"
+    // Screen navigation: "HOME", "KHATA", "KHATA_DETAIL", "MONTHLY", "DAILY", "RATION", "REPORTS", "HISTORY", "SETTINGS"
     private val _currentScreen = MutableStateFlow("HOME")
     val currentScreen: StateFlow<String> = _currentScreen.asStateFlow()
 
@@ -58,8 +59,24 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     private val _rationItems = MutableStateFlow<List<RationItem>>(emptyList())
     val rationItems: StateFlow<List<RationItem>> = _rationItems.asStateFlow()
 
-    private val _customCards = MutableStateFlow<List<CustomCard>>(emptyList())
-    val customCards: StateFlow<List<CustomCard>> = _customCards.asStateFlow()
+    // History / Archive States
+    private val _recordedMonths = MutableStateFlow<List<String>>(emptyList())
+    val recordedMonths: StateFlow<List<String>> = _recordedMonths.asStateFlow()
+
+    private val _historySelectedMonth = MutableStateFlow(_currentMonthKey.value)
+    val historySelectedMonth: StateFlow<String> = _historySelectedMonth.asStateFlow()
+
+    private val _historyMonthlyExpenditures = MutableStateFlow<List<MonthlyExpenditure>>(emptyList())
+    val historyMonthlyExpenditures: StateFlow<List<MonthlyExpenditure>> = _historyMonthlyExpenditures.asStateFlow()
+
+    private val _historyDailyExpenses = MutableStateFlow<List<DailyExpense>>(emptyList())
+    val historyDailyExpenses: StateFlow<List<DailyExpense>> = _historyDailyExpenses.asStateFlow()
+
+    private val _historyRationItems = MutableStateFlow<List<RationItem>>(emptyList())
+    val historyRationItems: StateFlow<List<RationItem>> = _historyRationItems.asStateFlow()
+
+    private val _historySummary = MutableStateFlow(DashboardSummary(_currentMonthKey.value))
+    val historySummary: StateFlow<DashboardSummary> = _historySummary.asStateFlow()
 
     init {
         val dbHelper = DatabaseHelper(application)
@@ -82,6 +99,9 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         if (screen != "KHATA_DETAIL") {
             _selectedParty.value = null
         }
+        if (screen == "HISTORY") {
+            loadHistoryMonths()
+        }
     }
 
     fun setMonthKey(monthKey: String) {
@@ -96,8 +116,8 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
             _monthlyExpenditures.value = repository.getMonthlyExpenditures(mKey)
             _dailyExpenses.value = repository.getDailyExpenses(mKey)
             _rationItems.value = repository.getRationItems(mKey)
-            _customCards.value = repository.getCustomCards()
             _summary.value = repository.getDashboardSummary(mKey)
+            _recordedMonths.value = repository.getAllRecordedMonths()
 
             val currentP = _selectedParty.value
             if (currentP != null) {
@@ -173,6 +193,11 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         refreshAll()
     }
 
+    fun updateMonthlyExpenditure(id: Long, title: String, amount: Double, notes: String) {
+        repository.updateMonthlyExpenditure(id, title, amount, notes)
+        refreshAll()
+    }
+
     fun toggleMonthlyExpenditurePaid(id: Long, isPaid: Boolean) {
         repository.toggleMonthlyExpenditurePaid(id, isPaid)
         refreshAll()
@@ -183,7 +208,7 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         refreshAll()
     }
 
-    // Copy previous month's expenditures into this month
+    // Copy previous month's expenditures into this month (marked as UNPAID fresh)
     fun copyPreviousMonthExpenditures() {
         val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
         try {
@@ -194,6 +219,7 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
             }
             val prevMonthKey = sdf.format(cal.time)
             val copied = repository.copyMonthlyExpendituresFromPreviousMonth(prevMonthKey, _currentMonthKey.value)
+            repository.copyRationFromPreviousMonth(prevMonthKey, _currentMonthKey.value)
             refreshAll()
             if (copied > 0) {
                 Toast.makeText(getApplication(), I18n.t("copy_success", _language.value), Toast.LENGTH_LONG).show()
@@ -215,8 +241,8 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
     }
 
     // 4. Monthly Ration / Grocery Checklist
-    fun addRationItem(name: String, qty: Double, unit: String, estPrice: Double, notes: String) {
-        repository.addRationItem(_currentMonthKey.value, name, qty, unit, estPrice, notes)
+    fun addRationItem(name: String, company: String, qty: Double, unit: String, estPrice: Double, notes: String) {
+        repository.addRationItem(_currentMonthKey.value, name, company, qty, unit, estPrice, notes)
         refreshAll()
     }
 
@@ -230,24 +256,62 @@ class ExpensesViewModel(application: Application) : AndroidViewModel(application
         refreshAll()
     }
 
-    // 5. Custom Cards
-    fun addCustomCard(title: String, targetType: String, targetId: Long?, icon: String, color: String) {
-        repository.addCustomCard(title, targetType, targetId, icon, color)
-        refreshAll()
+    // Print & Share Shopkeeper List
+    fun printShopkeeperList(context: Context) {
+        PrintReportHelper.printShopkeeperDocument(context, _rationItems.value, _currentMonthKey.value, _language.value)
     }
 
-    fun deleteCustomCard(id: Long) {
-        repository.deleteCustomCard(id)
-        refreshAll()
+    fun shareShopkeeperList(context: Context) {
+        val text = PrintReportHelper.generateShopkeeperText(_rationItems.value, _currentMonthKey.value, _language.value)
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val chooser = Intent.createChooser(sendIntent, "Share Grocery List").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(chooser)
     }
 
-    // Backup
+    // History / Archive Operations
+    fun loadHistoryMonths() {
+        viewModelScope.launch {
+            val months = repository.getAllRecordedMonths()
+            _recordedMonths.value = months
+            if (months.isNotEmpty()) {
+                selectHistoryMonth(months.first())
+            }
+        }
+    }
+
+    fun selectHistoryMonth(monthKey: String) {
+        _historySelectedMonth.value = monthKey
+        viewModelScope.launch {
+            _historyMonthlyExpenditures.value = repository.getMonthlyExpenditures(monthKey)
+            _historyDailyExpenses.value = repository.getDailyExpenses(monthKey)
+            _historyRationItems.value = repository.getRationItems(monthKey)
+            _historySummary.value = repository.getDashboardSummary(monthKey)
+        }
+    }
+
+    // Backup & Restore
     fun exportBackup() {
         try {
             val file = backupManager.exportToJson(_currentMonthKey.value)
             backupManager.shareBackup(file)
         } catch (e: Exception) {
             Toast.makeText(getApplication(), "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun restoreBackup(uri: Uri) {
+        val success = backupManager.restoreFromUri(uri)
+        if (success) {
+            refreshAll()
+            Toast.makeText(getApplication(), I18n.t("restore_success", _language.value), Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(getApplication(), I18n.t("restore_failed", _language.value), Toast.LENGTH_LONG).show()
         }
     }
 }

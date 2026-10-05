@@ -2,11 +2,15 @@ package com.ghardari.app.data.repository
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import com.ghardari.app.data.model.*
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -14,14 +18,13 @@ import java.util.Locale
 class BackupManager(private val context: Context, private val repository: ExpensesRepository) {
 
     data class BackupData(
-        val appVersion: String = "2.0.0",
+        val appVersion: String = "3.0.0",
         val exportedAt: String,
         val currentMonthKey: String,
-        val parties: List<PartyRecord>,
-        val monthlyExpenditures: List<MonthlyExpenditure>,
-        val dailyExpenses: List<DailyExpense>,
-        val rationItems: List<RationItem>,
-        val customCards: List<CustomCard>
+        val parties: List<PartyRecord> = emptyList(),
+        val monthlyExpenditures: List<MonthlyExpenditure> = emptyList(),
+        val dailyExpenses: List<DailyExpense> = emptyList(),
+        val rationItems: List<RationItem> = emptyList()
     )
 
     fun exportToJson(currentMonthKey: String): File {
@@ -32,8 +35,7 @@ class BackupManager(private val context: Context, private val repository: Expens
             parties = repository.getParties(),
             monthlyExpenditures = repository.getMonthlyExpenditures(currentMonthKey),
             dailyExpenses = repository.getDailyExpenses(currentMonthKey),
-            rationItems = repository.getRationItems(currentMonthKey),
-            customCards = repository.getCustomCards()
+            rationItems = repository.getRationItems(currentMonthKey)
         )
 
         val gson: Gson = GsonBuilder().setPrettyPrinting().create()
@@ -64,6 +66,34 @@ class BackupManager(private val context: Context, private val repository: Expens
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(chooser)
+    }
+
+    fun restoreFromUri(uri: Uri): Boolean {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return false
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val jsonString = reader.readText()
+            reader.close()
+            inputStream.close()
+
+            val gson = Gson()
+            val backupData = gson.fromJson(jsonString, BackupData::class.java)
+
+            if (backupData != null) {
+                repository.restoreBackupData(
+                    parties = backupData.parties,
+                    monthlyExp = backupData.monthlyExpenditures,
+                    dailyExp = backupData.dailyExpenses,
+                    ration = backupData.rationItems
+                )
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     fun generateWhatsAppStatement(party: PartyRecord, transactions: List<KhataTransaction>, lang: AppLanguage): String {

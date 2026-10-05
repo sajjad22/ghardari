@@ -11,7 +11,7 @@ data class PartyRecord(
     val id: Long = 0,
     val name: String,
     val phone: String = "",
-    val type: String = "LENDER", // "LENDER" (we owe them) or "BORROWER" (they owe us)
+    val type: String = "LENDER", // "LENDER" (we owe them / bank) or "BORROWER" (they owe us)
     val currentBalance: Double = 0.0,
     val updatedAt: String = "",
     val notes: String = ""
@@ -56,6 +56,7 @@ data class RationItem(
     val id: Long = 0,
     val monthKey: String, // "YYYY-MM"
     val name: String,
+    val company: String = "", // Brand or Company e.g. Sunsilk, Lifebuoy, Dalda
     val quantity: Double,
     val unit: String, // kg, gm, liter, bottle, packet, dozen, piece
     val estimatedPrice: Double = 0.0,
@@ -64,17 +65,7 @@ data class RationItem(
     val notes: String = ""
 )
 
-// 5. Custom Dashboard Cards
-data class CustomCard(
-    val id: Long = 0,
-    val title: String,
-    val targetType: String, // "KHATA", "EXPENSE", "NOTE", "WEB"
-    val targetId: Long? = null,
-    val icon: String = "Star",
-    val color: String = "#0F766E"
-)
-
-// Overall Dashboard Summary
+// Overall Dashboard & Reports Summary
 data class DashboardSummary(
     val monthKey: String,
     val monthlyBillsTotal: Double = 0.0,
@@ -86,5 +77,6 @@ data class DashboardSummary(
     val rationBoughtCount: Int = 0,
     val rationTotalCount: Int = 0,
     val khataWeOwe: Double = 0.0,
-    val khataOwedToUs: Double = 0.0
+    val khataOwedToUs: Double = 0.0,
+    val grandTotalExpense: Double = 0.0 // monthlyBillsPaid + dailyExpensesTotal + rationTotal
 )

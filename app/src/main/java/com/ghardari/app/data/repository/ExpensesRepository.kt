@@ -22,6 +22,8 @@ class ExpensesRepository(private val dbHelper: DatabaseHelper) {
         dbHelper.getMonthlyExpenditures(monthKey)
     fun addMonthlyExpenditure(monthKey: String, title: String, amount: Double, notes: String): Long =
         dbHelper.addMonthlyExpenditure(monthKey, title, amount, notes)
+    fun updateMonthlyExpenditure(id: Long, title: String, amount: Double, notes: String) =
+        dbHelper.updateMonthlyExpenditure(id, title, amount, notes)
     fun toggleMonthlyExpenditurePaid(id: Long, isPaid: Boolean) =
         dbHelper.toggleMonthlyExpenditurePaid(id, isPaid)
     fun deleteMonthlyExpenditure(id: Long) =
@@ -40,20 +42,24 @@ class ExpensesRepository(private val dbHelper: DatabaseHelper) {
     // 4. Monthly Ration / Grocery Checklist
     fun getRationItems(monthKey: String): List<RationItem> =
         dbHelper.getRationItems(monthKey)
-    fun addRationItem(monthKey: String, name: String, qty: Double, unit: String, estPrice: Double, notes: String): Long =
-        dbHelper.addRationItem(monthKey, name, qty, unit, estPrice, notes)
+    fun addRationItem(monthKey: String, name: String, company: String, qty: Double, unit: String, estPrice: Double, notes: String): Long =
+        dbHelper.addRationItem(monthKey, name, company, qty, unit, estPrice, notes)
     fun updateRationPurchased(id: Long, isPurchased: Boolean, actualPrice: Double) =
         dbHelper.updateRationPurchased(id, isPurchased, actualPrice)
     fun deleteRationItem(id: Long) =
         dbHelper.deleteRationItem(id)
+    fun copyRationFromPreviousMonth(fromMonthKey: String, toMonthKey: String): Int =
+        dbHelper.copyRationFromPreviousMonth(fromMonthKey, toMonthKey)
 
-    // 5. Custom Cards
-    fun getCustomCards(): List<CustomCard> = dbHelper.getCustomCards()
-    fun addCustomCard(title: String, targetType: String, targetId: Long?, icon: String, color: String): Long =
-        dbHelper.addCustomCard(title, targetType, targetId, icon, color)
-    fun deleteCustomCard(id: Long) = dbHelper.deleteCustomCard(id)
+    // History & Reports
+    fun getAllRecordedMonths(): List<String> = dbHelper.getAllRecordedMonths()
+    fun getDashboardSummary(monthKey: String): DashboardSummary = dbHelper.getDashboardSummary(monthKey)
 
-    // Dashboard Summary
-    fun getDashboardSummary(monthKey: String): DashboardSummary =
-        dbHelper.getDashboardSummary(monthKey)
+    // Restore
+    fun restoreBackupData(
+        parties: List<PartyRecord>,
+        monthlyExp: List<MonthlyExpenditure>,
+        dailyExp: List<DailyExpense>,
+        ration: List<RationItem>
+    ) = dbHelper.restoreBackupData(parties, monthlyExp, dailyExp, ration)
 }

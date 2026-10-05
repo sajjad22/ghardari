@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,16 +38,17 @@ fun MonthlyBillsScreen(
     onBackClick: () -> Unit,
     onTogglePaid: (id: Long, isPaid: Boolean) -> Unit,
     onAddExpenditure: (title: String, amount: Double, notes: String) -> Unit,
+    onUpdateExpenditure: (id: Long, title: String, amount: Double, notes: String) -> Unit,
     onDeleteExpenditure: (id: Long) -> Unit,
     onCopyPreviousMonthClick: () -> Unit
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingItem by remember { mutableStateOf<MonthlyExpenditure?>(null) }
     var showConfirmCopyDialog by remember { mutableStateOf(false) }
 
     val totalAmount = expenditures.sumOf { it.amount }
     val paidAmount = expenditures.filter { it.isPaid }.sumOf { it.amount }
     val unpaidAmount = totalAmount - paidAmount
-    val unpaidCount = expenditures.count { !it.isPaid }
 
     Scaffold(
         topBar = {
@@ -143,7 +145,7 @@ fun MonthlyBillsScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Button to Copy Previous Month
+                        // Copy Previous Month Action
                         OutlinedButton(
                             onClick = { showConfirmCopyDialog = true },
                             shape = RoundedCornerShape(12.dp),
@@ -240,6 +242,18 @@ fun MonthlyBillsScreen(
                                 )
 
                                 IconButton(
+                                    onClick = { editingItem = item },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                }
+
+                                IconButton(
                                     onClick = { onDeleteExpenditure(item.id) },
                                     modifier = Modifier.size(32.dp)
                                 ) {
@@ -258,7 +272,7 @@ fun MonthlyBillsScreen(
         }
     }
 
-    // Dialog: Add Monthly Expenditure (Clean labels, NO placeholder / alte text)
+    // Dialog: Add Monthly Expenditure
     if (showAddDialog) {
         var titleText by remember { mutableStateOf("") }
         var amountText by remember { mutableStateOf("") }
@@ -335,6 +349,96 @@ fun MonthlyBillsScreen(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1.2f),
+                            enabled = titleText.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0
+                        ) {
+                            Text(I18n.t("save", language), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Dialog: Edit Monthly Expenditure (e.g. modify amount of copied bill)
+    if (editingItem != null) {
+        val target = editingItem!!
+        var titleText by remember { mutableStateOf(target.title) }
+        var amountText by remember { mutableStateOf(if (target.amount % 1.0 == 0.0) target.amount.toInt().toString() else target.amount.toString()) }
+        var notesText by remember { mutableStateOf(target.notes) }
+
+        Dialog(onDismissRequest = { editingItem = null }) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = I18n.t("edit_monthly_item", language),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E40AF)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = titleText,
+                        onValueChange = { titleText = it },
+                        label = { Text(I18n.t("expense_title", language)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = amountText,
+                        onValueChange = { if (it.all { ch -> ch.isDigit() || ch == '.' }) amountText = it },
+                        label = { Text(I18n.t("amount", language)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = notesText,
+                        onValueChange = { notesText = it },
+                        label = { Text(I18n.t("notes", language)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { editingItem = null },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(I18n.t("cancel", language))
+                        }
+
+                        Button(
+                            onClick = {
+                                val amt = amountText.toDoubleOrNull() ?: 0.0
+                                if (titleText.isNotBlank() && amt > 0) {
+                                    onUpdateExpenditure(target.id, titleText.trim(), amt, notesText.trim())
+                                    editingItem = null
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E40AF)),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1.2f),
                             enabled = titleText.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0
