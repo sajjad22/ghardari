@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">گھرداری - گھر کا خرچ اور کھاتہ</string>
+    <string name="app_tagline">گھریلو اخراجات، ادھار اور راشن لسٹ</string>
+    <string name="tab_expenses">ماہانہ اخراجات</string>
+    <string name="tab_khata">ادھار اور کھاتہ</string>
+    <string name="tab_ration">راشن لسٹ</string>
+    <string name="tab_reports">رپورٹ اور بیک اپ</string>
+</resources>

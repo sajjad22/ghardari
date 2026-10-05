@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">گهرڌاري - گهرو خرچ ۽ کاتو</string>
+    <string name="app_tagline">گهرو خرچ، اڌارو ۽ راشن سنڀاليندڙ</string>
+    <string name="tab_expenses">مهيني جا خرچ</string>
+    <string name="tab_khata">اڌارو ۽ کاتو</string>
+    <string name="tab_ration">راشن لسٽ</string>
+    <string name="tab_reports">رپورٽ ۽ بيڪ اپ</string>
+</resources>

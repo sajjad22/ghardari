@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ghardari - Household Manager</string>
+    <string name="app_tagline">Household Khata &amp; Expenses</string>
+    <string name="tab_expenses">Expenses</string>
+    <string name="tab_khata">Khata</string>
+    <string name="tab_ration">Grocery List</string>
+    <string name="tab_reports">Reports</string>
+</resources>
