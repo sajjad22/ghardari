@@ -1,0 +1,114 @@
+<div dir="rtl" style="font-family: 'Noto Naskh Arabic', 'Lateef', Tahoma, 'Arial', sans-serif; line-height: 1.9; color: #2C3E50; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #FAFAFA; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+
+  <!-- Header Banner -->
+  <div style="background: linear-gradient(135deg, #047857 0%, #065F46 100%); color: #ffffff; padding: 30px 25px; border-radius: 12px; text-align: center; margin-bottom: 25px;">
+    <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: bold; letter-spacing: 0.5px;">📱 گهرداري (Ghardari) – پنهنجي گهر جو سمورو خرچ، اڌار کاتو ۽ راشن هاڻي رکو پنهنجي موبائل ۾!</h1>
+    <p style="margin: 0; font-size: 18px; color: #A7F3D0;">مڪمل طور آف لائن (بغير انٽرنيٽ جي) ۽ سنڌي ٻوليءَ ۾ تيار ڪيل سولي اينڊرائڊ ايپليڪيشن</p>
+  </div>
+
+  <!-- Introduction -->
+  <p style="font-size: 17px; text-align: justify; margin-bottom: 20px;">
+    السلام عليڪم پيارا دوستو! اڄ جي دور ۾ گهر جا خرچ سنڀالڻ، اڌار کاتي جو حساب رکڻ ۽ مهيني جي راشن جي خريداري وقت حساب ڪتاب لکڻ ڪنهن به عام فرد يا خاص طور تي گهر جي وڏي يا گهرو عورت لاءِ هڪ وڏو چئلينج هوندو آهي. ڪاغذ ۽ ڊائرين تي لکيل حساب اڪثر گم ٿي ويندا آهن ۽ مهيني جي آخر ۾ خبر ئي نه پوندي آهي ته پگهار يا رقم ڪيڏانهن وئي!
+  </p>
+
+  <p style="font-size: 17px; text-align: justify; margin-bottom: 25px;">
+    انهيءَ مسئلي کي هميشه لاءِ حل ڪرڻ لاءِ اسان پيش ڪري رهيا آهيون <strong>"گهرداري (Ghardari)"</strong>، جيڪا هڪ بلڪل مفت، محفوظ، ۽ مڪمل طور تي آف لائن (Offline) ڪم ڪندڙ اينڊرائڊ ايپليڪيشن آهي. هن ايپ کي خاص طور تي سنڌي گهرن جي ضرورتن کي آڏو رکي بلڪل سادي نموني ٺاهيو ويو آهي.
+  </p>
+
+  <!-- Key Features Section -->
+  <h2 style="color: #065F46; border-bottom: 2px solid #10B981; padding-bottom: 8px; margin-top: 30px; font-size: 24px;">🌟 ايپليڪيشن جون مکيه خاصيتون</h2>
+
+  <!-- Feature 1 -->
+  <div style="background: #ffffff; border: 1px solid #E5E7EB; border-right: 5px solid #047857; padding: 18px 20px; border-radius: 8px; margin-bottom: 18px;">
+    <h3 style="margin: 0 0 8px 0; color: #065F46; font-size: 20px;">1. 👥 اڌار کاتو (Udhaar Khata)</h3>
+    <p style="margin: 0 0 10px 0; font-size: 16px;">
+      پنهنجي بينڪ اڪائونٽ ۽ ماڻهن جا کاتا الڳ الڳ سنڀاليو. ڪنهن کي ڪيترا پئسا ڏنا (Debit) ۽ ڪنهن کان ڪيترا پئسا ورتا (Credit)، سڀ رڪارڊ رکو.
+    </p>
+    <ul style="margin: 0; padding-right: 25px; font-size: 15px; color: #4B5563;">
+      <li>حساب پورا ٿيڻ تي صرف هڪ ڪلڪ سان «حساب صاف» (Clear Account) ڪريو.</li>
+      <li>کاتي جو مڪمل اسٽيٽمينٽ هڪ ڪلڪ تي واٽس ايپ (WhatsApp) تي موڪليو.</li>
+    </ul>
+  </div>
+
+  <!-- Feature 2 -->
+  <div style="background: #ffffff; border: 1px solid #E5E7EB; border-right: 5px solid #10B981; padding: 18px 20px; border-radius: 8px; margin-bottom: 18px;">
+    <h3 style="margin: 0 0 8px 0; color: #065F46; font-size: 20px;">2. 📅 مهيني جا مقرر خرچ (Monthly Bills & Expenses)</h3>
+    <p style="margin: 0 0 10px 0; font-size: 16px;">
+      مهيني ۾ هڪ ڀيرو ادا ٿيندڙ سمورا بل (بجلي، گئس، پاڻي، گهر جو مسواڙ، اسڪول فيس، رڪشا خرچ، کير وغيره) هتي ٽو-ڊو (TODO) لسٽ جي شڪل ۾ رکو.
+    </p>
+    <ul style="margin: 0; padding-right: 25px; font-size: 15px; color: #4B5563;">
+      <li>بل ادا ٿيڻ تي سامهون ڏنل چيڪ باڪس تي ڪلڪ ڪري «ادا ٿيل» (Paid) يا «باقي» (Unpaid) رکو.</li>
+      <li><strong>گذريل مهيني مان نقل ڪريو:</strong> نئين مهيني ۾ وري ٻيهر سڀ بل لکڻ جي ضرورت ناهي! هڪ بٽڻ دٻايو، پوري لسٽ پاڻمرادو نئين مهيني ۾ اڻ ادا (Unpaid) ٿي ويندي ۽ اوهان رقم تبديل به ڪري سگهو ٿا.</li>
+    </ul>
+  </div>
+
+  <!-- Feature 3 -->
+  <div style="background: #ffffff; border: 1px solid #E5E7EB; border-right: 5px solid #059669; padding: 18px 20px; border-radius: 8px; margin-bottom: 18px;">
+    <h3 style="margin: 0 0 8px 0; color: #065F46; font-size: 20px;">3. 🥗 روزانو خرچ جو لاگ (Daily Expenses)</h3>
+    <p style="margin: 0; font-size: 16px;">
+      روزانو جا ننڍا وڏا خرچ، جهڙوڪ رات جي ماني، تازي سبزي، پاڻي جون بوتلون، دوائون يا متفرق سودو سلف تاريخ وار لکو ۽ فوري طور معلوم ڪريو ته اڄ يا هن مهيني ڪل ڪيترو روزانو خرچ ٿيو.
+    </p>
+  </div>
+
+  <!-- Feature 4 -->
+  <div style="background: #ffffff; border: 1px solid #E5E7EB; border-right: 5px solid #047857; padding: 18px 20px; border-radius: 8px; margin-bottom: 18px;">
+    <h3 style="margin: 0 0 8px 0; color: #065F46; font-size: 20px;">4. 🛒 پوري مهيني جو راشن ۽ دڪاندار لاءِ PDF پرنٽ</h3>
+    <p style="margin: 0 0 10px 0; font-size: 16px;">
+      گهرو راشن جي پوري لسٽ شين جي نالي، ڪمپني/برانڊ (مثال طور: شيمپو سن سلڪ، صابڻ لائف بواءِ، تيل ڊالڊا) ۽ مقدار سان تيار ڪريو.
+    </p>
+    <ul style="margin: 0; padding-right: 25px; font-size: 15px; color: #4B5563;">
+      <li><strong>دڪاندار لاءِ پرنٽ يا PDF لسٽ:</strong> اها خوبصورت جدول ٺاهي ٿي جنهن ۾ دڪاندار لاءِ قيمت لکڻ جي الڳ خالي جاءِ هوندي آهي. اوهان موبائيل مان ئي ان جو PDF ٺاهي سگهو ٿا يا واٽس ايپ تي سڌو دڪاندار کي موڪلي سگهو ٿا.</li>
+    </ul>
+  </div>
+
+  <!-- Feature 5 & 6 -->
+  <div style="background: #ffffff; border: 1px solid #E5E7EB; border-right: 5px solid #10B981; padding: 18px 20px; border-radius: 8px; margin-bottom: 25px;">
+    <h3 style="margin: 0 0 8px 0; color: #065F46; font-size: 20px;">5. 📊 مالي رپورٽون، آرڪائيو ۽ محفوظ بيڪ اپ (Backup & Restore)</h3>
+    <ul style="margin: 0; padding-right: 25px; font-size: 15px; color: #4B5563;">
+      <li><strong>مالي تجزيو:</strong> ڪل گهرو خرچ (ادا ٿيل بل + روزانو خرچ + راشن) هڪ پيج تي چٽي ريت ڏسو.</li>
+      <li><strong>تاريخ ۽ آرڪائيو:</strong> گذريل ڪنهن به مهيني جو پراڻو رڪارڊ ڏسڻ لاءِ سولو ڪيلينڊر/آرڪائيو مينيو.</li>
+      <li><strong>1-ڪلڪ بيڪ اپ ۽ ريسٽور:</strong> فون مٽائڻ وقت پنهنجو ڊيٽا فائيل واٽس ايپ يا گوگل ڊرائيو تي محفوظ ڪريو ۽ نئين فون ۾ فوري بحال ڪريو.</li>
+    </ul>
+  </div>
+
+  <!-- Download Action Box -->
+  <div style="background: #ECFDF5; border: 2px dashed #059669; padding: 25px; border-radius: 12px; text-align: center; margin: 30px 0;">
+    <h2 style="color: #065F46; margin: 0 0 10px 0; font-size: 24px;">📥 هاڻي ئي مفت ڊائون لوڊ ڪريو!</h2>
+    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+      هي ايپليڪيشن ڪنهن به اينڊرائڊ موبائيل (Android 7.0 يا ان کان مٿي) تي آسانيءَ سان هلي ٿي.
+    </p>
+
+    <div style="margin: 20px 0;">
+      <a href="https://github.com/sajjad22/ghardari/releases/download/v1.0.0/ghardari-v1.0.0.apk" 
+         target="_blank" 
+         style="background-color: #047857; color: #ffffff; text-decoration: none; padding: 14px 30px; font-size: 19px; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 10px rgba(4,120,87,0.3); transition: all 0.3s ease;">
+        ⬇️ ڊائون لوڊ اينڊرائڊ ايپ (APK فائيل)
+      </a>
+    </div>
+
+    <p style="font-size: 14px; color: #6B7280; margin: 15px 0 0 0;">
+      📂 فائيل سائيز: تقريباً 21 MB | اوپن سورس گٽ هب رليز
+    </p>
+  </div>
+
+  <!-- Installation Steps -->
+  <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+    <h3 style="color: #1F2937; margin: 0 0 10px 0; font-size: 18px;">📲 انسٽال ڪرڻ جو آسان طريقو:</h3>
+    <ol style="margin: 0; padding-right: 25px; font-size: 15px; color: #4B5563; line-height: 1.8;">
+      <li>مٿي ڏنل بٽڻ تي ڪلڪ ڪري <strong>ghardari-v1.0.0.apk</strong> فائيل ڊائون لوڊ ڪريو.</li>
+      <li>فائيل کوليو؛ جيڪڏهن موبائيل پڇي ته <em>"Install Unknown Apps"</em> يا برائوزر جي اجازت ڏيو.</li>
+      <li>ايپ اوپن ڪريو ۽ سنڌي ٻوليءَ ۾ پنهنجي گهر جو حساب ڪتاب شروعات ڪريو!</li>
+    </ol>
+  </div>
+
+  <!-- Footer / GitHub Links -->
+  <div style="border-top: 1px solid #E5E7EB; padding-top: 15px; text-align: center; font-size: 14px; color: #6B7280;">
+    <p style="margin: 0 0 5px 0;">
+      هي پروجيڪٽ مڪمل طور تي اوپن سورس آهي. ڪوڊ ڏسڻ لاءِ گٽ هب جو دورو ڪريو:
+    </p>
+    <a href="https://github.com/sajjad22/ghardari" target="_blank" style="color: #047857; font-weight: bold; text-decoration: none;">
+      🔗 GitHub Repository: sajjad22/ghardari
+    </a>
+  </div>
+
+</div>
